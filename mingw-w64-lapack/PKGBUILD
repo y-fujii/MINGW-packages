@@ -2,9 +2,10 @@
 
 _realname=lapack
 
+pkgbase=mingw-w64-${_realname}
 pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}"
-pkgver=3.5.0
-pkgrel=2
+pkgver=3.6.1
+pkgrel=1
 arch=('any')
 pkgdesc="Linear Algebra PACKage (mingw-w64)"
 depends=("${MINGW_PACKAGE_PREFIX}-gcc-libs" "${MINGW_PACKAGE_PREFIX}-gcc-libgfortran")
@@ -13,49 +14,40 @@ options=('strip' 'staticlibs')
 license=('LGPL')
 url="http://www.netlib.org/lapack"
 source=("http://www.netlib.org/${_realname}/${_realname}-${pkgver}.tgz")
-sha1sums=('5870081889bf5d15fd977993daab29cf3c5ea970')
+sha256sums=('888a50d787a9d828074db581c80b2d22bdb91435a673b1bf6cd6eb51aa50d1de')
 
-build()
-{
-  mkdir -p ${pkgdir}${MINGW_PREFIX}
-  pushd ${pkgdir}${MINGW_PREFIX} > /dev/null
-  export PREFIX_WIN=`pwd -W`
-  popd > /dev/null
-
-  pushd ${MINGW_PREFIX} > /dev/null
-  export PREFIX_DEPS=`pwd -W`
-  popd > /dev/null
-
+build() {
   cd "$srcdir"
   mkdir -p build-${CARCH} && cd build-${CARCH}
-  ${MINGW_PREFIX}/bin/cmake \
-    -G"MSYS Makefiles" \
-    -DCMAKE_INSTALL_PREFIX:PATH=${PREFIX_WIN} \
-    -DCMAKE_Fortran_COMPILER:PATH=${PREFIX_DEPS}/bin/gfortran.exe \
-    -DCMAKE_BUILD_TYPE=Release \
-    -DBUILD_SHARED_LIBS=ON \
-    -DCMAKE_NEED_RESPOSE=ON \
-    -DBUILD_TESTING=OFF \
-    ../${_realname}-${pkgver}
+  MSYS2_ARG_CONV_EXCL="-DCMAKE_INSTALL_PREFIX=" \
+    ${MINGW_PREFIX}/bin/cmake \
+      -G"MSYS Makefiles" \
+      -DCMAKE_INSTALL_PREFIX=${MINGW_PREFIX} \
+      -DCMAKE_Fortran_COMPILER=${MINGW_PREFIX}/bin/gfortran.exe \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DBUILD_SHARED_LIBS=ON \
+      -DCMAKE_NEED_RESPONSE=ON \
+      -DBUILD_TESTING=OFF \
+      ../${_realname}-${pkgver}
   make
 
   cd "$srcdir"
   mkdir -p build-${CARCH}s && cd build-${CARCH}s
-  ${MINGW_PREFIX}/bin/cmake \
-    -G"MSYS Makefiles" \
-    -DCMAKE_INSTALL_PREFIX:PATH=${PREFIX_WIN} \
-    -DCMAKE_Fortran_COMPILER:PATH=${PREFIX_DEPS}/bin/gfortran.exe \
-    -DCMAKE_BUILD_TYPE=Release \
-    -DBUILD_SHARED_LIBS=OFF \
-    -DBUILD_TESTING=OFF \
-    ../${_realname}-${pkgver}
+  MSYS2_ARG_CONV_EXCL="-DCMAKE_INSTALL_PREFIX=" \
+    ${MINGW_PREFIX}/bin/cmake \
+      -G"MSYS Makefiles" \
+      -DCMAKE_INSTALL_PREFIX=${MINGW_PREFIX} \
+      -DCMAKE_Fortran_COMPILER=${MINGW_PREFIX}/bin/gfortran.exe \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DBUILD_SHARED_LIBS=OFF \
+      -DBUILD_TESTING=OFF \
+      ../${_realname}-${pkgver}
   make
 }
 
-package()
-{
+package() {
   cd "$srcdir/build-${CARCH}s"
-  make install # DESTDIR="$pkgdir"
+  make DESTDIR="$pkgdir" install
   cd "$srcdir/build-${CARCH}"
-  make install # DESTDIR="$pkgdir"
+  make DESTDIR="$pkgdir" install
 }

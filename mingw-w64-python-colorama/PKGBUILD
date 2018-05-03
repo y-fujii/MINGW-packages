@@ -1,0 +1,68 @@
+# Maintainer: Alexey Pavlov <Alexpux@gmail.com>
+# Contributor: Ray Donnelly <mingw.android@gmail.com>
+
+_realname=colorama
+pkgbase=mingw-w64-python-${_realname}
+pkgname=("${MINGW_PACKAGE_PREFIX}-python2-${_realname}" "${MINGW_PACKAGE_PREFIX}-python3-${_realname}")
+pkgver=0.3.9
+pkgrel=2
+pkgdesc="Python API for cross-platform colored terminal text (mingw-w64)"
+arch=('any')
+license=('BSD')
+url="https://pypi.python.org/pypi/colorama"
+makedepends=("${MINGW_PACKAGE_PREFIX}-python2-setuptools"
+             "${MINGW_PACKAGE_PREFIX}-python3-setuptools")
+options=('staticlibs')
+source=("https://pypi.org/packages/source/c/${_realname}/${_realname}-${pkgver}.tar.gz")
+sha256sums=('48eb22f4f8461b1df5734a074b57042430fb06e1d61bd1e11b078c0fe6d7a1f1')
+
+prepare() {
+  cd ${srcdir}
+  cp -r colorama-${pkgver} python2-build
+  cp -r colorama-${pkgver} python3-build
+}
+
+build() {
+  cd "${srcdir}"
+  for builddir in python{2,3}-build; do
+    pushd ${builddir}
+    ${MINGW_PREFIX}/bin/${builddir%-build} setup.py build
+    popd
+  done
+}
+
+package_python2-colorama() {
+  depends=("${MINGW_PACKAGE_PREFIX}-python2")
+
+  cd "${srcdir}/python2-build"
+  MSYS2_ARG_CONV_EXCL="--prefix=;--install-scripts=;--install-platlib=" \
+    ${MINGW_PREFIX}/bin/python2 setup.py install --prefix=${MINGW_PREFIX} --root="${pkgdir}" -O1
+
+  install -Dm644 LICENSE.txt "${pkgdir}${MINGW_PREFIX}/share/licenses/python2-${_realname}/COPYING"
+}
+
+package_python3-colorama() {
+  depends=("${MINGW_PACKAGE_PREFIX}-python3")
+
+  cd "${srcdir}/python3-build"
+  MSYS2_ARG_CONV_EXCL="--prefix=;--install-scripts=;--install-platlib=" \
+    ${MINGW_PREFIX}/bin/python3 setup.py install --prefix=${MINGW_PREFIX} --root="${pkgdir}" -O1
+
+  install -Dm644 LICENSE.txt "${pkgdir}${MINGW_PREFIX}/share/licenses/python3-${_realname}/COPYING"
+}
+
+package_mingw-w64-i686-python2-colorama() {
+  package_python2-colorama
+}
+
+package_mingw-w64-i686-python3-colorama() {
+  package_python3-colorama
+}
+
+package_mingw-w64-x86_64-python2-colorama() {
+  package_python2-colorama
+}
+
+package_mingw-w64-x86_64-python3-colorama() {
+  package_python3-colorama
+}

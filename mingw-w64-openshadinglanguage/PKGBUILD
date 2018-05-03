@@ -1,54 +1,60 @@
 # Maintainer: Alexey Pavlov <alexpux@gmail.com>
 
 _realname=openshadinglanguage
+pkgbase=mingw-w64-${_realname}
 pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}"
-pkgver=1.5.12
+conflicts=("${MINGW_PACKAGE_PREFIX}-${_realname}-git")
+replaces=("${MINGW_PACKAGE_PREFIX}-${_realname}-git")
+pkgver=1.8.10
 pkgrel=1
 pkgdesc="Advanced shading language for production GI renderers (mingw-w64)"
 arch=('any')
 url="https://github.com/imageworks/OpenShadingLanguage/"
 license=("custom")
 depends=("${MINGW_PACKAGE_PREFIX}-boost"
-        "${MINGW_PACKAGE_PREFIX}-libpng"
-        "${MINGW_PACKAGE_PREFIX}-glew"
-        "${MINGW_PACKAGE_PREFIX}-libtiff"
-        "${MINGW_PACKAGE_PREFIX}-openimageio"
-        "${MINGW_PACKAGE_PREFIX}-freetype"
-        "${MINGW_PACKAGE_PREFIX}-intel-tbb"
-        "${MINGW_PACKAGE_PREFIX}-ilmbase"
-        "${MINGW_PACKAGE_PREFIX}-openexr"
+         "${MINGW_PACKAGE_PREFIX}-clang"
+         "${MINGW_PACKAGE_PREFIX}-freetype"
+         "${MINGW_PACKAGE_PREFIX}-glew"
+         "${MINGW_PACKAGE_PREFIX}-ilmbase"
+         "${MINGW_PACKAGE_PREFIX}-intel-tbb"
+         "${MINGW_PACKAGE_PREFIX}-libpng"
+         "${MINGW_PACKAGE_PREFIX}-libtiff"
+         "${MINGW_PACKAGE_PREFIX}-openexr"
+         "${MINGW_PACKAGE_PREFIX}-openimageio"
         )
 makedepends=("${MINGW_PACKAGE_PREFIX}-cmake"
-             "${MINGW_PACKAGE_PREFIX}-clang"
              "${MINGW_PACKAGE_PREFIX}-gcc"
              "${MINGW_PACKAGE_PREFIX}-python2"
              "${MINGW_PACKAGE_PREFIX}-pkg-config")
-source=(https://github.com/imageworks/OpenShadingLanguage/archive/Release-${pkgver}.tar.gz
-        0001-mingw-w64-fix.patch
+source=(${_realname}-${pkgver}.tar.gz::https://github.com/imageworks/OpenShadingLanguage/archive/Release-${pkgver}.tar.gz
+        0001-install-dirs.patch
         0002-dont-add-flex-include-dir.patch
         0003-fix-OIIO-windows.patch
+        0004-fix-installing-docs.patch
         0005-Fix-cast-from-void-ptr.patch
-        0006-Fix-weird-array-out-of-bounds-error.patch
         0007-Fix-bad-casts-with-intptr_t.patch
-        0008-Install-dlls.patch)
-md5sums=('484752a0f97df55962c3a667075deddc'
-         'c225e66cd0a59a674b331b26374ba082'
-         '78526dd22cea1d42238609a9cdfef816'
-         '9c73b150c2696024a44397ef94584463'
-         '73851a8ec414f099fe1195ea18d756f9'
-         '33d03ef6eb6433c0df111098a6c7b177'
-         '85ed91acdd3bd974a18b8d1c9ae3e79b'
-         '7816fd1cd6d2fcbb2547384aa14c7760')
+        0008-openimageio-api-changes.patch
+        0009-llvm_clang_5-support.patch)
+sha256sums=('5b9ad6814fd55e68f4ac50e4214120629ab9175142dc93aac350d0f54bea745a'
+            'e3f6ad09619d122ada129cbc77d7778751abfecef9ac7e0a60d9550c811df643'
+            'c9e02624cf6e607118f1f7fd8bf8bda9af5103afde5770a11fa5ccf49916fc5b'
+            '355120807bab0e7c0ba08d9831ee8e64f4faaedc07a769bad28aca8732880d18'
+            'bafdde92611252b061906453a58672245363c9ce2960b175ee27146347086f15'
+            '541cc1eb0c506e253de2f26af37dc6e35de891a940906c6e33a2f4774a4a844e'
+            'd3e6d2bdd059ec9b1581b02c9f736f26a06e1189929c6276d1d7d81204bb3535'
+            'ccf77deca5282a878d05508a56c658cc29efea4e53845fbd508855ecf66a1792'
+            '51b84a6b53cdfb706a3bb2b3117567b51d3a296e19eeb68bb8bc33f1f4015f5b')
 
 prepare() {
-  cd ${srcdir}/OpenShadingLanguage-Release-$pkgver
-  patch -p1 -i ${srcdir}/0001-mingw-w64-fix.patch
+  cd ${srcdir}/OpenShadingLanguage-Release-${pkgver}
+  patch -p1 -i ${srcdir}/0001-install-dirs.patch
   patch -p1 -i ${srcdir}/0002-dont-add-flex-include-dir.patch
   patch -p1 -i ${srcdir}/0003-fix-OIIO-windows.patch
+  patch -p1 -i ${srcdir}/0004-fix-installing-docs.patch
   patch -p1 -i ${srcdir}/0005-Fix-cast-from-void-ptr.patch
-  patch -p1 -i ${srcdir}/0006-Fix-weird-array-out-of-bounds-error.patch
   patch -p1 -i ${srcdir}/0007-Fix-bad-casts-with-intptr_t.patch
-  patch -p1 -i ${srcdir}/0008-Install-dlls.patch
+  patch -p1 -i ${srcdir}/0008-openimageio-api-changes.patch
+  patch -p1 -i ${srcdir}/0009-llvm_clang_5-support.patch
 }
 
 build() {
@@ -61,33 +67,35 @@ build() {
   [[ -d build-${MINGW_CHOST} ]] && rm -r build-${MINGW_CHOST}
   mkdir build-${MINGW_CHOST} && cd build-${MINGW_CHOST}
 
+  MSYS2_ARG_CONV_EXCL="-DCMAKE_INSTALL_PREFIX=" \
   ${MINGW_PREFIX}/bin/cmake.exe \
     -G"MSYS Makefiles" \
-    -DCMAKE_INSTALL_PREFIX:PATH=${pkgdir}${MINGW_PREFIX} \
+    -DCMAKE_INSTALL_PREFIX=${MINGW_PREFIX} \
+    -DSTOP_ON_WARNING=OFF \
     -DILMBASE_CUSTOM=True \
     -DILMBASE_CUSTOM_INCLUDE_DIR=${MINGW_PREFIX}/include \
     -DILMBASE_CUSTOM_LIB_DIR=${MINGW_PREFIX}/lib \
     -DILMBASE_CUSTOM_LIBRARIES="Half Iex Imath IlmThread" \
     -DEXTRA_OSLEXEC_LIBRARIES="${_extra_libs}" \
     -DLLVM_STATIC=1 \
-    ../OpenShadingLanguage-Release-$pkgver
+    -DOSL_BUILD_CPP11=1 \
+    ../OpenShadingLanguage-Release-${pkgver}
 
     #-DCMAKE_CXX_FLAGS="-DTINYFORMAT_ALLOW_WCHAR_STRINGS"
     #-DVERBOSE=1
 
   # $PWD/src/liboslcomp PATH addition needed for running oslc.exe during the build (for liboslcomp.dll)
   # ${MINGW_PREFIX}/bin PATH addition needed for finding libboost_system-mt.dll when running oslc.exe.
-  PATH=$PWD/src/liboslcomp:${MINGW_PREFIX}/bin:"${PATH}" make #VERBOSE=1
+  PATH=${PWD}/src/liboslcomp:${MINGW_PREFIX}/bin:"${PATH}" make #VERBOSE=1
 }
 
 package() {
   cd ${srcdir}//build-${MINGW_CHOST}
 
-  make install
+  make DESTDIR=${pkgdir} install
 
   mkdir -p "${pkgdir}${MINGW_PREFIX}"/share/OSL/
   mkdir -p "${pkgdir}${MINGW_PREFIX}"/share/licenses/${_realname}
-  mv "${pkgdir}${MINGW_PREFIX}"/LICENSE "${pkgdir}${MINGW_PREFIX}"/share/licenses/${_realname} # TODO: Tell upstream about this shit
-  mv "${pkgdir}${MINGW_PREFIX}"/{CHANGES,README.md,INSTALL} "${pkgdir}${MINGW_PREFIX}"/share/OSL/
-  mv "${pkgdir}${MINGW_PREFIX}"/doc "${pkgdir}${MINGW_PREFIX}"/share/OSL/doc
+  
+  install -Dm644 "${srcdir}/OpenShadingLanguage-Release-${pkgver}/LICENSE" "${pkgdir}${MINGW_PREFIX}/share/licenses/${_realname}/LICENSE"
 }

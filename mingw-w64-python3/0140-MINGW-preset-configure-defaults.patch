@@ -1,9 +1,8 @@
-diff -urN a/configure.ac b/configure.ac
---- a/configure.ac	2014-10-11 14:18:45.441469400 +0100
-+++ b/configure.ac	2014-10-11 14:18:48.045618300 +0100
-@@ -813,6 +813,27 @@
- MULTIARCH=$($CC --print-multiarch 2>/dev/null)
- AC_SUBST(MULTIARCH)
+--- Python-3.6.1/configure.ac.orig	2017-06-13 17:42:33.096411800 +0200
++++ Python-3.6.1/configure.ac	2017-06-13 17:44:43.059845300 +0200
+@@ -919,6 +919,28 @@
+ fi
+ AC_SUBST(MULTIARCH_CPPFLAGS)
  
 +# initialize default configuration
 +py_config=
@@ -26,12 +25,13 @@ diff -urN a/configure.ac b/configure.ac
 +    . "$srcdir/Misc/cross_$py_config"
 +  fi
 +fi
- 
- AC_SUBST(LIBRARY)
- AC_MSG_CHECKING(LIBRARY)
-diff -urN a/Misc/config_mingw b/Misc/config_mingw
---- a/Misc/config_mingw	1970-01-01 01:00:00.000000000 +0100
-+++ b/Misc/config_mingw	2014-10-11 14:18:48.047618400 +0100
++
+ AC_MSG_CHECKING([for -Wl,--no-as-needed])
+ save_LDFLAGS="$LDFLAGS"
+ LDFLAGS="$LDFLAGS -Wl,--no-as-needed"
+diff -Naur Python-3.5.2-orig/Misc/config_mingw Python-3.5.2/Misc/config_mingw
+--- Python-3.5.2-orig/Misc/config_mingw	1970-01-01 03:00:00.000000000 +0300
++++ Python-3.5.2/Misc/config_mingw	2016-07-12 14:20:38.832800700 +0300
 @@ -0,0 +1,12 @@
 +# configure defaults for mingw* hosts
 +
@@ -45,9 +45,9 @@ diff -urN a/Misc/config_mingw b/Misc/config_mingw
 +# files to ignore
 +ac_cv_file__dev_ptmx=ignore #NOTE: under MSYS environment device exist
 +ac_cv_file__dev_ptc=no
-diff -urN a/Misc/cross_mingw32 b/Misc/cross_mingw32
---- a/Misc/cross_mingw32	1970-01-01 01:00:00.000000000 +0100
-+++ b/Misc/cross_mingw32	2014-10-11 14:18:48.048618500 +0100
+diff -Naur Python-3.5.2-orig/Misc/cross_mingw32 Python-3.5.2/Misc/cross_mingw32
+--- Python-3.5.2-orig/Misc/cross_mingw32	1970-01-01 03:00:00.000000000 +0300
++++ Python-3.5.2/Misc/cross_mingw32	2016-07-12 14:20:38.838300700 +0300
 @@ -0,0 +1,11 @@
 +# configure defaults for mingw32 host if cross-build
 +

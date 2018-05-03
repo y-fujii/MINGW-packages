@@ -1,31 +1,30 @@
 # Maintainer: Alexey Pavlov <alexpux@gmail.com>
 
 _realname=libmodplug
-
+pkgbase=mingw-w64-${_realname}
 pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}"
-pkgver=0.8.8.5
-pkgrel=2
+pkgver=0.8.9.0
+pkgrel=1
 pkgdesc="A MOD playing library (mingw-w64)"
 arch=('any')
-url="http://modplug-xmms.sourceforge.net/"
+url="https://modplug-xmms.sourceforge.io/"
 license=("custom")
 makedepends=("${MINGW_PACKAGE_PREFIX}-gcc" "${MINGW_PACKAGE_PREFIX}-pkg-config")
 depends=("${MINGW_PACKAGE_PREFIX}-gcc-libs")
 options=('strip' 'staticlibs')
-source=("http://downloads.sourceforge.net/modplug-xmms/${_realname}-${pkgver}.tar.gz"
-        0001-stdafx-mingw-w64.mingw.patch
+source=("https://downloads.sourceforge.net/modplug-xmms/${_realname}-${pkgver}.tar.gz"
         0002-fix-pkgconfig-file.patch)
-md5sums=('5f30241db109d647781b784e62ddfaa1'
-         '0853de6307501e2f2e9c7aae4b6ca226'
-         '84765aa95e603fd206f0e1d7f142aeaf')
+sha256sums=('457ca5a6c179656d66c01505c0d95fafaead4329b9dbaa0f997d00a3508ad9de'
+            'ca46295aed995688efc3380b928e7bed87c5d061f12b9ddf75b0448b916d9069')
 
 prepare() {
   cd "${srcdir}/${_realname}-${pkgver}"
-  patch -p1 -i "${srcdir}/0001-stdafx-mingw-w64.mingw.patch"
+
   patch -p1 -i "${srcdir}/0002-fix-pkgconfig-file.patch"
 }
 
 build() {
+  [[ -d "build-${MINGW_CHOST}" ]] && rm -rf "build-${MINGW_CHOST}"
   mkdir -p "${srcdir}/build-${MINGW_CHOST}"
   cd "${srcdir}/build-${MINGW_CHOST}"
   ../${_realname}-${pkgver}/configure \
@@ -35,6 +34,7 @@ build() {
     --target=${MINGW_CHOST} \
     --enable-shared \
     --enable-static
+
   make
 }
 

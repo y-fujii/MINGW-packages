@@ -1,9 +1,10 @@
 # Maintainer: Andrea Zagli <andrea.zagli.free@gmail.com>
 
 _realname=gexiv2
+pkgbase=mingw-w64-${_realname}
 pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}"
-pkgver=0.10.2
-pkgrel=1
+pkgver=0.10.6
+pkgrel=4
 arch=('any')
 pkgdesc="GObject-based wrapper around the Exiv2 library (mingw-w64)"
 depends=("${MINGW_PACKAGE_PREFIX}-glib2"
@@ -11,15 +12,17 @@ depends=("${MINGW_PACKAGE_PREFIX}-glib2"
          "${MINGW_PACKAGE_PREFIX}-python2")
 makedepends=("${MINGW_PACKAGE_PREFIX}-gcc"
              "${MINGW_PACKAGE_PREFIX}-vala"
+             "${MINGW_PACKAGE_PREFIX}-python2-gobject"
+             "${MINGW_PACKAGE_PREFIX}-python3-gobject"
              "${MINGW_PACKAGE_PREFIX}-gobject-introspection"
-             "gtk-doc")
+             "${MINGW_PACKAGE_PREFIX}-gtk-doc")
 options=('strip' 'staticlibs')
 license=("LGPL 2.1")
-url="http://www.gnome.org/"
-source=(http://ftp.gnome.org/pub/gnome/sources/${_realname}/${pkgver%.*}/${_realname}-$pkgver.tar.xz
+url="https://www.gnome.org/"
+source=(https://download.gnome.org/sources/${_realname}/${pkgver%.*}/${_realname}-${pkgver}.tar.xz
         001-win.patch)
-sha256sums=('2fd21f0ed5125e51d02226e7f41be751cfa8ae411a8ed1a651e16b06d79047b2'
-            '7cf45d8ee2c6e6766a8a13e192014877bcc1aa3eb091ebd99d28e0ef8bb8e166')
+sha256sums=('132788919667254b42c026ab39ab3c3a5be59be8575c05fa4b371ca8aed55825'
+            '3e4b85be8e6c440d54820f9afc8c39b3ce4706309cc176e66a21f3575c6c0bc7')
 
 prepare() {
   cd ${_realname}-${pkgver}
@@ -29,6 +32,7 @@ prepare() {
 }
 
 build() {
+  [[ -d build-${MINGW_CHOST} ]] && rm -rf build-${MINGW_CHOST}
   mkdir -p build-${MINGW_CHOST}
   cd build-${MINGW_CHOST}
 
@@ -38,11 +42,15 @@ build() {
     --build=${MINGW_CHOST} \
     --prefix=${MINGW_PREFIX} \
     --libexecdir=${MINGW_PREFIX}/lib \
-    --enable-introspection
+    --enable-introspection \
+    --enable-gtk-doc
+
   make
 }
 
 package() {
-  cd "$srcdir/build-${MINGW_CHOST}"
-  make DESTDIR=$pkgdir install
+  cd "${srcdir}/build-${MINGW_CHOST}"
+  make DESTDIR=${pkgdir} install
+
+  install -Dm644 "${srcdir}/${_realname}-${pkgver}/COPYING" "${pkgdir}${MINGW_PREFIX}/share/licenses/${_realname}/COPYING"
 }

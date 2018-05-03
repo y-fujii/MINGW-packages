@@ -1,22 +1,23 @@
 # Maintainer: Alexey Pavlov <alexpux@gmail.com>
 
 _realname=soundtouch
+pkgbase="mingw-w64-${_realname}"
 pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}"
-pkgver=1.8.0
+pkgver=2.0.0
 pkgrel=1
 pkgdesc="An audio processing library (mingw-w64)"
 arch=('any')
-url="http://www.surina.net/soundtouch/"
+url="https://www.surina.net/soundtouch/"
 license=("LGPL")
 makedepends=("${MINGW_PACKAGE_PREFIX}-gcc")
 depends=("${MINGW_PACKAGE_PREFIX}-gcc-libs")
 options=('strip' 'staticlibs')
-source=(http://www.surina.net/soundtouch/${_realname}-${pkgver}.tar.gz
+source=(https://www.surina.net/soundtouch/${_realname}-${pkgver}.tar.gz
         0001-no-undefined-on.mingw.patch
         0003-fix-docdir.mingw.patch)
-md5sums=('d02c6c91cb13901ca273a2b4b143ce41'
-         'f472d0b637cc0a3491435ff3409ed3cc'
-         '44fda585b032a555d7fffb4b13a3b159')
+sha256sums=('d224f7d1421b5f8e74a74c85741345bd9802618a40ae30ce5b427a5705c89d25'
+            '68d545eedd45afa26723aa2e3d7a447d179c78566308b29fa9d1c6a71476f50d'
+            '2cd136046831f3ad9a2e37c0afe3ecd9f25ce27f5dbf4ee8b23b862a96e76cd5')
 
 prepare() {
   cd "${srcdir}/${_realname}"
@@ -28,6 +29,7 @@ prepare() {
 }
 
 build() {
+  [[ -d "build-${MINGW_CHOST}" ]] && rm -rf "build-${MINGW_CHOST}"
   mkdir -p "${srcdir}/build-${MINGW_CHOST}"
   cd "${srcdir}/build-${MINGW_CHOST}"
   ../${_realname}/configure \
@@ -36,6 +38,7 @@ build() {
     --host=${MINGW_CHOST} \
     --enable-static \
     --enable-shared
+
   make
 }
 

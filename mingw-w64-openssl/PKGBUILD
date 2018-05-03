@@ -1,65 +1,63 @@
 # Maintainer: Alexey Pavlov <Alexpux@gmail.com>
 
 _realname=openssl
+pkgbase=mingw-w64-${_realname}
 pkgname=("${MINGW_PACKAGE_PREFIX}-${_realname}")
-pkgver=1.0.2
+_ver=1.0.2n
+# use a pacman compatible version scheme
+pkgver=${_ver/[a-z]/.${_ver//[0-9.]/}}
 pkgrel=1
 arch=('any')
 pkgdesc="The Open Source toolkit for Secure Sockets Layer and Transport Layer Security (mingw-w64)"
-depends=("${MINGW_PACKAGE_PREFIX}-gcc-libs" "${MINGW_PACKAGE_PREFIX}-zlib")
+depends=("${MINGW_PACKAGE_PREFIX}-ca-certificates" "${MINGW_PACKAGE_PREFIX}-gcc-libs" "${MINGW_PACKAGE_PREFIX}-zlib")
 makedepends=("${MINGW_PACKAGE_PREFIX}-gcc")
 options=('strip' '!buildflags' 'staticlibs')
 license=('BSD')
-url="http://www.openssl.org"
-noextract=(${_realname}-${pkgver}.tar.gz)
-source=(http://www.openssl.org/source/${_realname}-$pkgver.tar.gz{,.asc}
+url="https://www.openssl.org"
+noextract=(${_realname}-${_ver}.tar.gz)
+source=(https://www.openssl.org/source/${_realname}-${_ver}.tar.gz{,.asc}
         'openssl-1.0.0a-ldflags.patch'
-        'openssl-1.0.0d-windres.patch'
-        'openssl-1.0.1-parallel-build.patch'
+        'openssl-1.0.2a-parallel-build.patch'
         'openssl-1.0.1-x32.patch'
         'openssl-0.9.6-x509.patch'
         'openssl-1.0.1i-relocation.patch')
-md5sums=('38373013fc85c790aabf8837969c5eba'
-         'SKIP'
-         '9e0abad8dd17079815d9e92345c5adcb'
-         '835a78dbe9c8690dbdd9190aaf5432e7'
-         '12b97a21380bd471d0c9705e7dc8a23b'
-         'f10e6de3515a15128faae808287a8c84'
-         'cae4eea6db48a254653fd1903cfabd15'
-         'd8ed0865f35216a5e420e37d7a4e2515')
+sha256sums=('370babb75f278c39e0c50e8c4e7493bc0f18db6867478341a832a982fd15a8fe'
+            'SKIP'
+            '164aa4928b022cc716fac545b4fd69899cb274682aa487100e595abb652adbae'
+            '609d7ca040f7ab26f5e9844e486b3bcc04f3da656ce2db7733fbd65c6d10457a'
+            'f913185a36538315de3ff122ef96fc9a49e068078e65895cfc950bdb4ac4e4f0'
+            'e8ed15b50f749064e89f26d49b7fd85b3f95e5dde22e430c0f6181e5b07146c7'
+            'f8e6233fa4c289fb125586bf3f30cd617923f6be0c6fe8a3289aa3fac7d7e814')
+
+validpgpkeys=('8657ABB260F056B1E5190839D9C4D26D0E604491')
 
 prepare() {
-  cd $startdir/
   # Clean up old sources so re-patching doesn't fail.
-  [ -d $srcdir/${_realname}-$pkgver ] && rm -rf $srcdir/${_realname}-$pkgver
-  tar -xzvf ${_realname}-${pkgver}.tar.gz -C $srcdir
-  cd $srcdir/${_realname}-$pkgver
+  [[ -d ${srcdir}/${_realname}-${_ver} ]] && rm -rf ${srcdir}/${_realname}-${_ver}
+  tar -xzvf ${_realname}-${_ver}.tar.gz -C ${srcdir} || true
+  cd ${srcdir}/${_realname}-${_ver}
 
   patch -p1 -i ${srcdir}/openssl-1.0.0a-ldflags.patch
-  patch -p1 -i ${srcdir}/openssl-1.0.0d-windres.patch
-  patch -p1 -i ${srcdir}/openssl-1.0.1-parallel-build.patch
+  patch -p1 -i ${srcdir}/openssl-1.0.2a-parallel-build.patch
   patch -p1 -i ${srcdir}/openssl-1.0.1-x32.patch
   patch -p1 -i ${srcdir}/openssl-0.9.6-x509.patch
   patch -p1 -i ${srcdir}/openssl-1.0.1i-relocation.patch
 
+}
+
+build() {
   # No support for out-of-source builds
-  mkdir -p $srcdir/build-${CARCH}
-  cp -a ${srcdir}/${_realname}-${pkgver}/* ${srcdir}/build-${CARCH}
+  mkdir -p ${srcdir}/build-${CARCH}
+  cp -a ${srcdir}/${_realname}-${_ver}/* ${srcdir}/build-${CARCH}
 
   # Use mingw cflags instead of hardcoded ones
   sed -i -e '/^"mingw"/ s/-fomit-frame-pointer -O3 -march=i486 -Wall/-O2 -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions --param=ssp-buffer-size=4/' ${srcdir}/build-${CARCH}/Configure
-
-}
-
-build()
-{
-  cd "${srcdir}/build-${CARCH}"
 
   _mingw=mingw
   if $(echo ${CARCH} | grep -q x86_64); then
     _mingw=mingw64
   fi
-  cd "$srcdir/build-${CARCH}"
+  cd "${srcdir}/build-${CARCH}"
   export MSYS2_ARG_CONV_EXCL="--prefix="
   ./Configure \
     --prefix=${MINGW_PREFIX} \
@@ -71,12 +69,16 @@ build()
     enable-mdc2 \
     enable-tlsext \
     enable-rfc3779
-  make ZLIB_INCLUDE=-"I${MINGW_PREFIX}/include" depend all -j1
+
+  make -j1 ZLIB_INCLUDE=-I"${MINGW_PREFIX}"/include depend all
 }
 
 package() {
-  cd "$srcdir/build-${CARCH}"
-  make -j1 INSTALL_PREFIX="$pkgdir" MANDIR=${MINGW_PREFIX}/share/man MANSUFFIX=ssl install
+  cd "${srcdir}/build-${CARCH}"
+  make -j1 INSTALL_PREFIX="${pkgdir}" MANDIR=${MINGW_PREFIX}/share/man MANSUFFIX=ssl install
+
+  install -D -m644 LICENSE ${pkgdir}${MINGW_PREFIX}/share/licenses/${_realname}/LICENSE
+
   chmod -R 755 "${pkgdir}${MINGW_PREFIX}"/bin
   chmod -R 644 "${pkgdir}${MINGW_PREFIX}"/lib
   chmod -R 755 "${pkgdir}${MINGW_PREFIX}"/lib/engines

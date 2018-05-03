@@ -2,19 +2,20 @@
 # Contributor: Alexey Pavlov <alexpux@gmail.com>
 # Contributor: Ray Donnelly <mingw.android@gmail.com>
 
-#_variant=winrt
+#_variant=winrt #desktop
 _variant=desktop
 
 _realname=vlc
+pkgbase=mingw-w64-${_realname}-git
 pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}-git"
 provides=("${MINGW_PACKAGE_PREFIX}-${_realname}")
 conflicts=("${MINGW_PACKAGE_PREFIX}-${_realname}")
 _ver_base=2.2
-pkgver=3.0.0.59276.be0c8c6
+pkgver=3.0.0.66919.8530a6e
 pkgrel=1
 pkgdesc="A multi-platform MPEG, VCD/DVD, and DivX player"
 arch=('any')
-url="http://www.videolan.org/vlc/"
+url="https://www.videolan.org/vlc/"
 license=('LGPL2.1' 'GPL2')
 depends=("${MINGW_PACKAGE_PREFIX}-a52dec"
          "${MINGW_PACKAGE_PREFIX}-aribb24"
@@ -49,10 +50,11 @@ depends=("${MINGW_PACKAGE_PREFIX}-a52dec"
          "${MINGW_PACKAGE_PREFIX}-libtheora"
          "${MINGW_PACKAGE_PREFIX}-libvpx"
          "${MINGW_PACKAGE_PREFIX}-libxml2"
-         "${MINGW_PACKAGE_PREFIX}-lua"
+         "${MINGW_PACKAGE_PREFIX}-lua51"
          "${MINGW_PACKAGE_PREFIX}-opencv"
          "${MINGW_PACKAGE_PREFIX}-opus"
          "${MINGW_PACKAGE_PREFIX}-portaudio"
+         "${MINGW_PACKAGE_PREFIX}-protobuf"
          "${MINGW_PACKAGE_PREFIX}-schroedinger"
          "${MINGW_PACKAGE_PREFIX}-speex"
          "${MINGW_PACKAGE_PREFIX}-taglib"
@@ -67,13 +69,16 @@ depends=("${MINGW_PACKAGE_PREFIX}-a52dec"
          #"${MINGW_PACKAGE_PREFIX}-zvbi"
          #"${MINGW_PACKAGE_PREFIX}-libupnp"
          #"${MINGW_PACKAGE_PREFIX}-libtar"
-
          )
 makedepends=(
              "${MINGW_PACKAGE_PREFIX}-gcc"
              "pkg-config"
              "${MINGW_PACKAGE_PREFIX}-ncurses"
              "git"
+             "autoconf"
+             "automake"
+             "libtool"
+             "make"
              # 'libkate'
              # 'live-media'
              # 'libnotify'
@@ -107,62 +112,61 @@ makedepends=(
 #backup=('usr/share/vlc/lua/http/.hosts'
 #        'usr/share/vlc/lua/http/dialogs/.hosts')
 options=('strip' '!emptydirs')
-source=(#"${_realname}-${_ver_base}"::"git://git.videolan.org/${_realname}/${_realname}-${_ver_base}.git"
-        "${_realname}"::"git://git.videolan.org/${_realname}.git"
-        0001-MinGW-w64-fix-redeclaration-of-MFAudioFormat_Dolby_A.patch
+source=(#"${_realname}-${_ver_base}"::"git+https://git.videolan.org/git/${_realname}/${_realname}-${_ver_base}.git"
+        "${_realname}"::"git+https://git.videolan.org/git/${_realname}.git"
+        0001-Use-libdir-for-plugins-on-msys2.patch
         0002-MinGW-w64-lfind-s-_NumOfElements-is-an-unsigned-int.patch
         0003-MinGW-w64-don-t-pass-static-to-pkg-config-if-SYS-min.patch
-        0004-pollfd-is-defined-from-Vista-onwards.patch
-        0005-Revert-Win32-prefer-the-static-libraries-when-creati.patch
-        0006-Search-for-freeaddrinfo-in-SOCKET_LIBS.patch
-        0007-pollfd-is-defined-from-Vista-onwards.patch
-        0008-Use-libdir-for-plugins-on-msys2.patch)
-md5sums=('SKIP'
-         'c2a4338d8c9396054c1ed45fae221470'
-         '13f5a8bf897b253e0d9626a5ae79bc8d'
-         'c53c41b440eb42e7a2cda9109a1651c4'
-         '190af6f6e66b786bc481e2be0bde664c'
-         '8cd35991a69b14a1c3ab3b6faa9f15bc'
-         'de3700133876d218460f4b0ec6779f55'
-         '5b8f11f077663c5dd18c9905dcef08ea'
-         'b6a010849631177493135b3ad7c5f784')
+        0004-Revert-Win32-prefer-the-static-libraries-when-creati.patch
+        0011-Add-include-on-WINSTORE-for-QueueTimer-functions.patch
+        0012-Only-build-correct-modules-for-WINSTORE.patch
+        0013-remove-AllocConsole-reference-for-WINSTORE.patch
+        0014-Remove-some-legacy-mingw.org-header-defines.patch)
+sha256sums=('SKIP'
+            'a0b99a42bf90212b77d529de449d43ed449ef3bf427266b713337eea81a1040a'
+            'e2cfc7b7a4c5ce24ef9dbac2cc9248e0ff5030950b9b96d625d901b34c3fddbe'
+            'e1b434e8f0ca83af4c84becef14e15ecc6fdef963d5068f51cba928c276b08dd'
+            'cbef7e4f39ac9c298e98597421c32725437980210ec7d85fbd75df53bbe2eed0'
+            '3c55d8e00868b95addaaf174b2348a2ce915fc59208c61bd438c8834290712d3'
+            'a83eecee3b2431addd071b964f4febe6dc3b1b310b36ed6934e8fa2d8f5c4c47'
+            '64a1a0efd69e8ebb36df08c45ff8ae71e1b90d2c78ee7fd3229739c2d76a384d'
+            'cb07edb1c4db96a9ee85aae0d32ae6b491dc9c433058507031050455e0bb3d06')
 
 pkgver() {
-  cd $_realname
+  cd ${_realname}
   local _ver=$(grep AC_INIT configure.ac | sed -e 's/AC_INIT([^,]\+,\s*\[\?\([0-9.a-z-]\+\).*/\1/')
   #or use local _ver=$_ver_base
   _ver=${_ver%-*}
   revision=$(git rev-list --count HEAD)
   hash=$(git log --pretty=format:'%h' -n 1)
-  echo $_ver.$revision.$hash
+  echo ${_ver}.${revision}.${hash}
 }
 
 prepare() {
   cd "${srcdir}"/${_realname}
 
-  git am "${srcdir}"/0001-MinGW-w64-fix-redeclaration-of-MFAudioFormat_Dolby_A.patch
-  git am "${srcdir}"/0002-MinGW-w64-lfind-s-_NumOfElements-is-an-unsigned-int.patch
-  git am "${srcdir}"/0003-MinGW-w64-don-t-pass-static-to-pkg-config-if-SYS-min.patch
-  git am "${srcdir}"/0004-pollfd-is-defined-from-Vista-onwards.patch
-  git am "${srcdir}"/0005-Revert-Win32-prefer-the-static-libraries-when-creati.patch
-  git am "${srcdir}"/0006-Search-for-freeaddrinfo-in-SOCKET_LIBS.patch
-  #git am "${srcdir}"/0007-pollfd-is-defined-from-Vista-onwards.patch
+  if [ "${_variant}" != "winrt" ]; then
+    git am "${srcdir}"/0001-Use-libdir-for-plugins-on-msys2.patch
+  fi
 
-if [ "${_variant}" != "winrt" ]; then
+    git am "${srcdir}"/0002-MinGW-w64-lfind-s-_NumOfElements-is-an-unsigned-int.patch
+    git am "${srcdir}"/0003-MinGW-w64-don-t-pass-static-to-pkg-config-if-SYS-min.patch
+    git am "${srcdir}"/0004-Revert-Win32-prefer-the-static-libraries-when-creati.patch
 
-  git am "${srcdir}"/0008-Use-libdir-for-plugins-on-msys2.patch
-fi
+  if [ "${_variant}" == "winrt" ]; then
+    git am "${srcdir}"/0011-Add-include-on-WINSTORE-for-QueueTimer-functions.patch
+    git am "${srcdir}"/0012-Only-build-correct-modules-for-WINSTORE.patch
+    git am "${srcdir}"/0013-remove-AllocConsole-reference-for-WINSTORE.patch
+    git am "${srcdir}"/0014-Remove-some-legacy-mingw.org-header-defines.patch
+  fi
 
   ./bootstrap
 
-  sed -i -e 's:truetype/freefont:TTF:g' modules/text_renderer/freetype.c
-  sed -i -e 's:truetype/ttf-dejavu:TTF:g' modules/visualization/projectm.cpp
+  #sed -i -e 's:truetype/freefont:TTF:g' modules/text_renderer/freetype.c
+  #sed -i -e 's:truetype/ttf-dejavu:TTF:g' modules/visualization/projectm.cpp
 }
 
 build() {
-
-  cd "${srcdir}"/${_realname}
-  ./bootstrap
 
   mkdir -p ${srcdir}/build-${MINGW_CHOST}
   cd ${srcdir}/build-${MINGW_CHOST}
@@ -176,11 +180,8 @@ build() {
 if [ "${_variant}" = "winrt" ]; then
 
   #WinRT
-  EXTRA_CPPFLAGS+=" -D_WIN32_WINNT=0x602 -DWINVER=0x602 -DWINSTORECOMPAT -D_UNICODE -DUNICODE -DHAVE_WINRT"
-
-  #todo: ask about CFLAGS. i.e building in full WinRT mode not compat
-  CFLAGS+=" -D_WIN32_WINNT=0x602 -DWINVER=0x602 -DWINSTORECOMPAT -D_UNICODE -DUNICODE -DHAVE_WINRT"
-  CFLAGS+=" -DNDEBUG -DWINAPI_FAMILY=WINAPI_FAMILY_APP -DHAVE_WINRT"
+  EXTRA_CPPFLAGS+="-D_WIN32_WINNT=0x602 -DWINVER=0x602 -DWINSTORECOMPAT -D_UNICODE -DUNICODE -DWINAPI_FAMILY=WINAPI_FAMILY_APP -DHAVE_WINRT"
+  EXTRA_CFLAGS+="-DNDEBUG ${EXTRA_CPPFLAGS}"
   EXTRA_LDFLAGS+=" -lnormaliz -lwinstorecompat -lruntimeobject"
 
   ${MINGW_CHOST}-gcc -dumpspecs | sed -e 's/-lmingwex/-lwinstorecompat -lmingwex -lwinstorecompat -lole32 -lruntimeobject/' -e 's/-lmsvcrt/-lmsvcr110/' > newspecfile
@@ -190,10 +191,12 @@ if [ "${_variant}" = "winrt" ]; then
   echo "$NEWSPECFILE"
 
   #WinRT
+  CFLAGS="${EXTRA_CFLAGS}" \
   CPPFLAGS="${EXTRA_CPPFLAGS}" \
   LDFLAGS="${EXTRA_LDFLAGS}" \
   CC="${MINGW_CHOST}-gcc -specs=$NEWSPECFILE" \
   CXX="${MINGW_CHOST}-g++ -specs=$NEWSPECFILE" \
+  BUILDCC="${MINGW_PREFIX}/bin/gcc" \
   ac_cv_search_connect="-lws2_32" \
   ${srcdir}/${_realname}/configure \
     --prefix=${MINGW_PREFIX} \
@@ -233,8 +236,11 @@ if [ "${_variant}" = "winrt" ]; then
     --disable-taglib \
     --disable-ncurses \
     --disable-dbus \
-    LUAC==${MINGW_PREFIX}/bin/luac  LUA_LIBS="`pkg-config --libs lua`" \
-    RCC==${MINGW_PREFIX}/bin/rcc
+    --disable-lua
+
+    # Having some issues with lua 5.2, disable for now
+    #LUAC==${MINGW_PREFIX}/bin/luac51  LUA_LIBS="`pkg-config --libs lua`" \
+    #RCC==${MINGW_PREFIX}/bin/rcc
 
 #todo: look at direct for winRT
 # --disable-dirac
@@ -243,7 +249,7 @@ if [ "${_variant}" = "winrt" ]; then
 # --enable-mmx \
 
 else
-
+  BUILDCC="${MINGW_PREFIX}/bin/gcc" \
   ${srcdir}/${_realname}/configure \
     --prefix=${MINGW_PREFIX} \
     --sysconfdir=${MINGW_PREFIX}/etc \
@@ -256,8 +262,11 @@ else
     --disable-sdl \
     --disable-telx \
     --enable-nls \
-    LUAC==${MINGW_PREFIX}/bin/luac  LUA_LIBS="`pkg-config --libs lua`" \
-    RCC==${MINGW_PREFIX}/bin/rcc
+    --disable-lua
+
+    # Having some issues with lua 5.2, disable for now
+    #LUAC==${MINGW_PREFIX}/bin/luac51  LUA_LIBS="`pkg-config --libs lua`" \
+    #RCC==${MINGW_PREFIX}/bin/rcc
 
 fi
 

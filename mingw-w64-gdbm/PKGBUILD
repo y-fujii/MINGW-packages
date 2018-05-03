@@ -1,25 +1,26 @@
 # Maintainer: Alexey Pavlov <alexpux@gmail.com>
 
 _realname=gdbm
+pkgbase=mingw-w64-${_realname}
 pkgname=("${MINGW_PACKAGE_PREFIX}-${_realname}")
-pkgver=1.11
+pkgver=1.12
 pkgrel=1
 pkgdesc="GNU database library (mingw-w64)"
 arch=('any')
-url="http://www.gnu.org/software/gdbm/gdbm.html"
+url="https://www.gnu.org/software/gdbm/gdbm.html"
 license=('GPL3')
 depends=("${MINGW_PACKAGE_PREFIX}-gcc-libs"
          "${MINGW_PACKAGE_PREFIX}-gettext"
          "${MINGW_PACKAGE_PREFIX}-libiconv")
 makedepends=("${MINGW_PACKAGE_PREFIX}-gcc")
 options=('staticlibs')
-source=(ftp://ftp.gnu.org/gnu/gdbm/${_realname}-${pkgver}.tar.gz{,.sig}
+source=(https://ftp.gnu.org/gnu/gdbm/${_realname}-${pkgver}.tar.gz{,.sig}
         'gdbm-1.10-zeroheaders.patch'
         'gdbm-win32-support.patch')
-md5sums=('72c832680cf0999caedbe5b265c8c1bd'
-         'SKIP'
-         'ac255b10452005237836cd2d3a470733'
-         'eb46af0a7d4360526f9a39f181d1af21')
+sha256sums=('d97b2166ee867fd6ca5c022efee80702d6f30dd66af0e03ed092285c3af9bcea'
+            'SKIP'
+            'ff33700f7919039037e5f56452c56ca00e968637f6f38485c9b8ae586770ee5a'
+            '77db7bb73a8aebf6d587867824b3079769ec2fe442b0825b6fb0193407a01516')
 
 prepare() {
   cd ${srcdir}/${_realname}-${pkgver}
@@ -35,14 +36,14 @@ build() {
   mkdir ${srcdir}/build-${MINGW_CHOST}
   cd ${srcdir}/build-${MINGW_CHOST}
 
-  ${srcdir}/${_realname}-${pkgver}/configure \
+  ../${_realname}-${pkgver}/configure \
     --build=${MINGW_CHOST} \
     --host=${MINGW_CHOST} \
     --target=${MINGW_CHOST} \
     --prefix=${MINGW_PREFIX} \
     --enable-static \
     --enable-shared \
-    --enable-libgdbm-compat
+    --disable-libgdbm-compat
 
   make
 }

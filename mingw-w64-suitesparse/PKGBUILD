@@ -1,65 +1,76 @@
 # Maintainer: Ray Donnelly <mingw.android@gmail.com>
 
-_realname=SuiteSparse
+_realname=suitesparse
+pkgbase=mingw-w64-${_realname}
 pkgname=("${MINGW_PACKAGE_PREFIX}-suitesparse")
-pkgver=4.4.3
+pkgver=5.1.0
 pkgrel=1
 pkgdesc='A suite of sparse matrix algorithms (mingw-w64)'
+url="http://faculty.cse.tamu.edu/davis/suitesparse.html"
 license=('GPL')
-groups=("${MINGW_PACKAGE_PREFIX}")
 arch=('any')
-source=("http://faculty.cse.tamu.edu/davis/${_realname}/${_realname}-${pkgver}.tar.gz"
-        "0001-Win32-Do-not-link-librt.patch"
-        "0002-Win32-Add-strip-trailing-cr-to-diff-for-crlf.patch"
-        "0003-MSYS2-Use-OpenBLAS.patch"
-        "0004-Allow-env-specified-INSTALL_LIB-and-INSTALL_INCLUDE.patch")
-depends=("${MINGW_PACKAGE_PREFIX}-openblas")
-makedepends=("${MINGW_PACKAGE_PREFIX}-gcc-fortran")
+source=("http://faculty.cse.tamu.edu/davis/SuiteSparse/SuiteSparse-${pkgver}.tar.gz"
+        "0001-mingw-w64-Use-a-not-lib-as-AR_TARGET-extension.patch"
+        "0002-mingw-w64-Set-SO_OPTS--shared-move-dlls-create-import-libs.patch"
+        "0003-mingw-w64-no-CUDA.patch")
+depends=("${MINGW_PACKAGE_PREFIX}-openblas"
+         "${MINGW_PACKAGE_PREFIX}-metis")
+makedepends=("${MINGW_PACKAGE_PREFIX}-cmake")
 options=('staticlibs')
-md5sums=('b2e6f2373d480aa6f0ea5ca3d5d531c3'
-         '347ab64c5fd737c44268a6e586ecd156'
-         '1773305ad707db5b88d253ea914b975b'
-         'ed48448a0da066540c0d3c9179865995'
-         '8fe69f053f4e49768568efc57961523b')
+sha256sums=('1b1371074224c6844697f3a55024d185b7ff6ffa49ac141d433fbb1aadf426f5'
+            '1c848ba4fd5b07d65e0f8e9f6d5153efc51292d0d487d446afbdacf25e4fd8f7'
+            '6f6a96a801c7da927b1ebed309ec067b4aa8408a79a9de6e08b853413e793a53'
+            'ba683605113eac73eaa63cb1b24fde8110f395c888f5331870222f59ecdc354a')
 
 prepare() {
-  cd "${srcdir}"/${_realname}
-  patch -p1 -i "${srcdir}"/0001-Win32-Do-not-link-librt.patch
-  patch -p1 -i "${srcdir}"/0002-Win32-Add-strip-trailing-cr-to-diff-for-crlf.patch
-  patch -p1 -i "${srcdir}"/0003-MSYS2-Use-OpenBLAS.patch
-  patch -p1 -i "${srcdir}"/0004-Allow-env-specified-INSTALL_LIB-and-INSTALL_INCLUDE.patch
+  cd "${srcdir}"/SuiteSparse
+  patch -p1 -i "${srcdir}"/0001-mingw-w64-Use-a-not-lib-as-AR_TARGET-extension.patch
+  patch -p1 -i "${srcdir}"/0002-mingw-w64-Set-SO_OPTS--shared-move-dlls-create-import-libs.patch
+  patch -p1 -i "${srcdir}"/0003-mingw-w64-no-CUDA.patch
 }
 
 build() {
-  [ -d "${srcdir}"/build-${CARCH} ] && rm -rf "${srcdir}"/build-${CARCH}
-  cp -rf "${srcdir}"/${_realname} build-${CARCH}
+  [[ -d "${srcdir}"/build-${CARCH} ]] && rm -rf "${srcdir}"/build-${CARCH}
+  cp -rf "${srcdir}"/SuiteSparse build-${CARCH}
+
   cd "${srcdir}"/build-${CARCH}
 
-  # Make twice due to missing dependencies
-  # between CHOLMOD/Lib and kluldemo
-  for _dir in ${PWD}/CHOLMOD/Lib ${PWD}; do
-    pushd ${_dir}
-      # https://www.gnu.org/software/octave/doc/interpreter/Compiling-Octave-with-64_002dbit-Indexing.html says
-      # "On 64-bit Windows systems, use -DLONGBLAS="long long" instead.", but that seems wrong. If 64-bit indexing
-      # is wanted, then long long should be used on 32-bit Windows too I expect (unless LONGBLAS refers to pointer
-      # size in some instances?)
-      CFLAGS='-DLONGBLAS="long long"' \
-      CXXFLAGS='-DLONGBLAS="long long"' \
-      CC=gcc CXX=g++ \
-        make
-    popd
-  done
+  # This avoids needing to use a very large patch (we still get diffs but
+  # that is down to a bug in format string handling somewhere where-by an
+  # extra 0-padding value is emitted in exponents of scientific floats).
+  [[ -d "${PWD}"/bin ]] || mkdir "${PWD}"/bin
+  echo "#!/usr/bin/env bash"                         > "${PWD}"/bin/diff
+  echo "/usr/bin/diff --strip-trailing-cr \"\$@\""  >> "${PWD}"/bin/diff
+
+  # This avoids needing to use another very large patch.
+  [[ -d "${PWD}"/lib ]] || mkdir "${PWD}"/lib
+  ar cru "${PWD}"/lib/librt.a
+
+  PATH=${PWD}/bin:"${PATH}"          \
+  CC=gcc                             \
+  CXX=g++                            \
+  CFLAGS="-DLONGBLAS='long long'"    \
+  CXXFLAGS="-DLONGBLAS='long long'"  \
+  LDFLAGS="-L${PWD}/lib"             \
+  MY_METIS_LIB=-lmetis               \
+  BLAS=-lopenblas                    \
+  LAPACK=-lopenblas                  \
+    make
 }
 
 package() {
+  mkdir -p "${pkgdir}"${MINGW_PREFIX}/{bin,lib,include} || true
+
   cd "${srcdir}"/build-${CARCH}
 
-  mkdir -p "${pkgdir}"${MINGW_PREFIX}/{lib,include}
-  make install \
-    INSTALL_LIB="${pkgdir}"${MINGW_PREFIX}/lib \
-    INSTALL_INCLUDE="${pkgdir}"${MINGW_PREFIX}/include
-
-  # Remove all the version-named static libraries. They'd be symlinks
-  # on other systems.
-  find "${pkgdir}"${MINGW_PREFIX} -name "*.*.*.*.a" -exec rm -f {} \;
+  PATH=${PWD}/bin:"${PATH}"               \
+  CC=gcc                                  \
+  CXX=g++                                 \
+  CFLAGS="-DLONGBLAS='long long'"         \
+  CXXFLAGS="-DLONGBLAS='long long'"       \
+  MY_METIS_LIB=-lmetis                    \
+  BLAS=-lopenblas                         \
+  LAPACK=-lopenblas                       \
+    make install                          \
+      INSTALL="${pkgdir}"${MINGW_PREFIX}
 }

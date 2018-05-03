@@ -1,7 +1,7 @@
-diff -urN a/configure.ac b/configure.ac
---- a/configure.ac	2014-10-11 14:21:57.625461700 +0100
-+++ b/configure.ac	2014-10-11 14:22:00.282613700 +0100
-@@ -612,6 +612,65 @@
+diff -Naur Python-3.5.2-orig/configure.ac Python-3.5.2/configure.ac
+--- Python-3.5.2-orig/configure.ac	2016-07-12 14:22:01.911300700 +0300
++++ Python-3.5.2/configure.ac	2016-07-12 14:22:07.823300700 +0300
+@@ -613,6 +613,65 @@
  AC_MSG_RESULT([$DELIM])
  AC_SUBST(DELIM)
  
@@ -67,17 +67,17 @@ diff -urN a/configure.ac b/configure.ac
  AC_MSG_CHECKING([for init system calls])
  AC_SUBST(INITSYS)
  case $host in
-diff -urN a/Lib/sysconfig.py b/Lib/sysconfig.py
---- a/Lib/sysconfig.py	2014-10-11 14:21:57.705466200 +0100
-+++ b/Lib/sysconfig.py	2014-10-11 14:22:00.284613800 +0100
-@@ -330,6 +330,14 @@
+diff -Naur Python-3.5.2-orig/Lib/sysconfig.py Python-3.5.2/Lib/sysconfig.py
+--- Python-3.5.2-orig/Lib/sysconfig.py	2016-07-12 14:21:37.313800700 +0300
++++ Python-3.5.2/Lib/sysconfig.py	2016-07-12 14:22:07.846300700 +0300
+@@ -328,6 +328,14 @@
          if isinstance(v, str):
              done[k] = v.strip()
  
 +    # any keys that have one with the same name suffixed with _b2h
 +    # need to be replaced with the value of the _b2h key.
 +    # This converts from MSYS*/Cygwin paths to Windows paths.
-+    for k, v in done.items():
++    for k, v in dict(done).items():
 +        if isinstance(k, str):
 +            if k.endswith("_b2h"):
 +                done[k[:-4]]=v
@@ -85,10 +85,10 @@ diff -urN a/Lib/sysconfig.py b/Lib/sysconfig.py
      # save the results in the global dictionary
      vars.update(done)
      return vars
-diff -urN a/Makefile.pre.in b/Makefile.pre.in
---- a/Makefile.pre.in	2014-10-11 14:21:57.625461700 +0100
-+++ b/Makefile.pre.in	2014-10-11 14:22:00.286613900 +0100
-@@ -115,6 +115,13 @@
+diff -Naur Python-3.5.2-orig/Makefile.pre.in Python-3.5.2/Makefile.pre.in
+--- Python-3.5.2-orig/Makefile.pre.in	2016-07-12 14:22:07.471800700 +0300
++++ Python-3.5.2/Makefile.pre.in	2016-07-12 14:22:07.854300700 +0300
+@@ -120,6 +120,13 @@
  # Install prefix for data files
  datarootdir=    @datarootdir@
  
@@ -102,12 +102,3 @@ diff -urN a/Makefile.pre.in b/Makefile.pre.in
  # Expanded directories
  BINDIR=		@bindir@
  LIBDIR=		@libdir@
-@@ -711,7 +718,7 @@
- 		-DPREFIX='"$(prefix)"' \
- 		-DEXEC_PREFIX='"$(exec_prefix)"' \
- 		-DVERSION='"$(VERSION)"' \
--		-DVPATH='"$(VPATH)"' \
-+		-DVPATH='"$(VPATH_b2h)"' \
- 		-o $@ $(srcdir)/Modules/getpath.c
- 
- # default sys.path calculations for windows platforms

@@ -2,25 +2,30 @@
 # Contributor: Renato Silva <br.renatosilva@gmail.com>
 
 _realname=harfbuzz
+pkgbase=mingw-w64-${_realname}
 pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}"
-pkgver=0.9.38
-pkgrel=3
+pkgver=1.7.2
+pkgrel=1
 pkgdesc="OpenType text shaping engine (mingw-w64)"
 arch=('any')
-url="http://www.freedesktop.org/wiki/Software/HarfBuzz"
+url="https://www.freedesktop.org/wiki/Software/HarfBuzz"
 license=("MIT")
 makedepends=("${MINGW_PACKAGE_PREFIX}-gcc"
-            "${MINGW_PACKAGE_PREFIX}-pkg-config"
-            "${MINGW_PACKAGE_PREFIX}-icu"
-            "${MINGW_PACKAGE_PREFIX}-gobject-introspection")
-depends=("${MINGW_PACKAGE_PREFIX}-gcc-libs"
-        "${MINGW_PACKAGE_PREFIX}-glib2"
-        "${MINGW_PACKAGE_PREFIX}-freetype"
-        "${MINGW_PACKAGE_PREFIX}-cairo")
+             "${MINGW_PACKAGE_PREFIX}-icu"
+             "${MINGW_PACKAGE_PREFIX}-gobject-introspection"
+             "${MINGW_PACKAGE_PREFIX}-pkg-config"
+             "${MINGW_PACKAGE_PREFIX}-cairo")
+depends=("${MINGW_PACKAGE_PREFIX}-freetype"
+         "${MINGW_PACKAGE_PREFIX}-gcc-libs"
+         "${MINGW_PACKAGE_PREFIX}-glib2"
+         "${MINGW_PACKAGE_PREFIX}-graphite2")
 options=('strip' 'staticlibs')
-optdepends=("${MINGW_PACKAGE_PREFIX}-icu: harfbuzz-icu")
-source=("http://www.freedesktop.org/software/harfbuzz/release/${_realname}-${pkgver}.tar.bz2")
-sha256sums=('6736f383b4edfcaaeb6f3292302ca382d617d8c79948bb2dd2e8f86cdccfd514')
+optdepends=(
+  "${MINGW_PACKAGE_PREFIX}-icu: harfbuzz-icu support"
+  "${MINGW_PACKAGE_PREFIX}-cairo: hb-view program"
+)
+source=("https://www.freedesktop.org/software/harfbuzz/release/${_realname}-${pkgver}.tar.bz2")
+sha256sums=('a790585e35c1a87f0dcc23580c84b7cc2324e6f67a2946178d278c2a36c790cb')
 
 prepare() {
   cd "${srcdir}/${_realname}-${pkgver}"
@@ -28,16 +33,19 @@ prepare() {
 }
 
 build() {
+  [[ -d "${srcdir}/build-${MINGW_CHOST}" ]] && rm -rf "${srcdir}/build-${MINGW_CHOST}"
   mkdir -p "${srcdir}/build-${MINGW_CHOST}"
   cd "${srcdir}/build-${MINGW_CHOST}"
-  "${srcdir}"/${_realname}-${pkgver}/configure \
+  ../${_realname}-${pkgver}/configure \
     --prefix=${MINGW_PREFIX} \
     --build=${MINGW_CHOST} \
     --host=${MINGW_CHOST} \
     --enable-shared \
     --enable-static \
     --enable-introspection \
+    --with-graphite2=yes \
     --with-gobject
+
   make
 }
 
@@ -48,7 +56,6 @@ check(){
 
 package() {
   cd "${srcdir}/build-${MINGW_CHOST}"
-  make DESTDIR="$pkgdir" install
-  find "${pkgdir}${MINGW_PREFIX}" -name '*.def' -o -name '*.exp' | xargs -rtl1 rm
+  make DESTDIR="${pkgdir}" install
   install -Dm644 "${srcdir}/${_realname}-${pkgver}/COPYING" "${pkgdir}${MINGW_PREFIX}/share/licenses/${_realname}/COPYING"
 }

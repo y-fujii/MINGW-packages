@@ -1,33 +1,32 @@
 # Maintainer: Alexey Pavlov <alexpux@gmail.com>
 
 _realname=waf
-
+pkgbase=mingw-w64-${_realname}
 pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}"
-pkgver=1.7.15
+pkgver=1.9.12
 pkgrel=2
 pkgdesc="General-purpose build system modelled after Scons (mingw-w64)"
 arch=('any')
 license=('BSD')
-url="http://code.google.com/p/waf/"
+url="https://waf.io/"
 makedepends=("setconf")
 depends=("${MINGW_PACKAGE_PREFIX}-python3")
 options=('!emptydirs')
-source=("http://${_realname}.googlecode.com/files/${_realname}-$pkgver.tar.bz2"
-    waflib.patch)
-sha256sums=('49780032ed2ac0e118030af329cbd5883d2b9cb9831fc632a3e7b2bfd99d3f1e'
-            'c7a7f938483db968e33bd1cdccb71cae199fd67afbc2baa1ec25e2ad4243e9bd')
+source=("https://waf.io/${_realname}-${pkgver}.tar.bz2"{,.asc})
+validpgpkeys=('8AF22DE5A06822E3474F3C7049B4C67C05277AAA')
+sha256sums=('b4d5ebc87efe09b010e2a1e21a4f388f94dbdc2083ea5e2d772cebdbcfad0126'
+            'SKIP')
 
 prepare() {
-  cd "${_realname}-$pkgver"
-  patch -p1 -i ${srcdir}/waflib.patch
+  cd "$srcdir/${_realname}-$pkgver"
   # Extracting license
-  head -n 30 waf | tail -n 25 > LICENSE
+  head -n 30 waf-light | tail -n 25 > LICENSE
   # Python 3 fix
-  sed -i '0,/env python/s//python3/' waf
+  sed -i '0,/env python/s//python3/' waf-light
 }
 
 build() {
-  cd ${_realname}-$pkgver
+  cd "${srcdir}/${_realname}-$pkgver"
   plain "Configure ..."
   ${MINGW_PREFIX}/bin/python3 ./waf-light configure --prefix=${MINGW_PREFIX}
   plain "Make waf ..."
@@ -35,10 +34,10 @@ build() {
 }
 
 package() {
-  cd "${_realname}-$pkgver"
+  cd "${srcdir}/${_realname}-$pkgver"
 
   ${MINGW_PREFIX}/bin/python3 ./waf-light install -f --destdir="$pkgdir" \
-    --tools='compat,compat15,ocaml,go,cython,scala,erlang,cuda,gcj,boost,pep8,eclipse'
+    --tools='compat,compat15,ocaml,go,cython,scala,erlang,cuda,gcj,boost,pep8,eclipse,unity,clang_compilation_database'
 
   install -Dm755 waf "${pkgdir}${MINGW_PREFIX}/bin/waf"
 

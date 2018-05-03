@@ -1,54 +1,44 @@
 # Maintainer: Alexey Pavlov <alexpux@gmail.com>
 
 _realname=opencl-headers
-_mingw_suff=mingw-w64-${CARCH}
-pkgname="${_mingw_suff}-${_realname}"
-_clbasever=2.0
-pkgver=${_clbasever}.0
-pkgrel=1
-pkgdesc="OpenCL (Open Computing Language) header files (mingw-w64)"
+pkgbase=mingw-w64-${_realname}
+pkgname=${MINGW_PACKAGE_PREFIX}-${_realname}
+pkgver=2.1.20161129 # date of the commit, branch 2.1
+pkgrel=3
+epoch=2
+pkgdesc='OpenCL (Open Computing Language) header files'
 arch=('any')
-url="http://www.khronos.org/registry/cl/"
-license=("custom")
-options=('staticlibs' 'strip')
-source=("${_realname}-${pkgver}.src.tar.xz"
+url='https://www.khronos.org/registry/cl/'
+license=('custom')
+makedepends=(git python3)
+source=('git+https://github.com/KhronosGroup/OpenCL-Headers.git#commit=abb2958'
+        'git+https://github.com/KhronosGroup/OpenCL-CLHPP.git#commit=d54d52c'
         'LICENSE.txt')
-_headers=("http://www.khronos.org/registry/cl/api/${_clbasever}/opencl.h"
-          "http://www.khronos.org/registry/cl/api/${_clbasever}/cl_platform.h"
-          "http://www.khronos.org/registry/cl/api/${_clbasever}/cl.h"
-          "http://www.khronos.org/registry/cl/api/${_clbasever}/cl_ext.h"
-          "http://www.khronos.org/registry/cl/api/${_clbasever}/cl_egl.h"
-          "http://www.khronos.org/registry/cl/api/${_clbasever}/cl_dx9_media_sharing.h"
-          "http://www.khronos.org/registry/cl/api/${_clbasever}/cl_d3d10.h"
-          "http://www.khronos.org/registry/cl/api/${_clbasever}/cl_d3d11.h"
-          "http://www.khronos.org/registry/cl/api/${_clbasever}/cl_gl.h")
-md5sums=('87f2794a10f1489c17457201992e07ba'
-         '8e59f0e0f64326e826007b49700fba76')
+sha256sums=('SKIP'
+            'SKIP'
+            'd1059405dce021e0c0a7f7e01b48447e641477e0c14a9bc29983f4202b67c410')
 
-# source PKGBUILD && mksource
-mksource() {
-   cd "${srcdir}"
-   _dirname=${_realname}-${pkgver}
-   mkdir ${_dirname}
+prepare() {
+  cd "${srcdir}"/OpenCL-CLHPP
 
-   pushd ${_dirname}
-   for _h in ${_headers[@]}; do
-      wget ${_h}
-   done
-   popd
-
-   tar -cJv --exclude=CVS -f ${_dirname}.src.tar.xz ${_dirname}
-   rm -rf ${_dirname}
+  # https://github.com/KhronosGroup/OpenCL-CLHPP/issues/26
+  git cherry-pick -n befe77b66fd3dd87ce9fef940e475cdc71d8bd9f
 }
 
 package() {
-   cd "${srcdir}/${_realname}-${pkgver}"
+  cd "${srcdir}"/OpenCL-Headers
 
-   install -dm755 "${pkgdir}${MINGW_PREFIX}"/include/CL
+  install -dm755 "${pkgdir}${MINGW_PREFIX}/include/CL"
 
-   for h in $(ls -1 *.h *.hpp); do
-      install -m 644 ${h} "${pkgdir}${MINGW_PREFIX}"/include/CL/
-   done
+  for h in *.h; do
+    install -m 644 ${h} "${pkgdir}${MINGW_PREFIX}/include/CL/"
+  done
 
-   install -D -m644 ../LICENSE.txt "${pkgdir}${MINGW_PREFIX}"/share/licenses/${_realname}/LICENSE
+  cd "${srcdir}"/OpenCL-CLHPP
+
+  python3 gen_cl_hpp.py -i input_cl.hpp -o cl.hpp
+  install -m 644 cl.hpp "${pkgdir}${MINGW_PREFIX}/include/CL/"
+  install -m 644 input_cl2.hpp "${pkgdir}${MINGW_PREFIX}/include/CL/cl2.hpp"
+
+  install -D -m644 ../LICENSE.txt "${pkgdir}${MINGW_PREFIX}/share/licenses/${_realname}/LICENSE"
 }

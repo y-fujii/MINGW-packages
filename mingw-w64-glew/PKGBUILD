@@ -1,33 +1,38 @@
 # Contributor: Martell Malone <martell malone at gmail dot com>
 
 _realname=glew
+pkgbase=mingw-w64-${_realname}
 pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}"
-pkgver=1.12.0
+pkgver=2.0.0
 pkgrel=1
 arch=('any')
 pkgdesc="GLEW, The OpenGL Extension Wrangler Library (mingw-w64)"
-depends=('')
+depends=()
 makedepends=("${MINGW_PACKAGE_PREFIX}-gcc" "xz")
-groups=("${MINGW_PACKAGE_PREFIX}")
 license=('Modified BSD/MIT/GPL')
-url="http://glew.sourceforge.net/"
+url="https://glew.sourceforge.io/"
 options=('strip' '!libtool' 'staticlibs')
-source=("http://sourceforge.net/projects/glew/files/glew/$pkgver/glew-$pkgver.tgz"
-        001-makefile.patch)
-md5sums=('01246c7ecd135d99be031aa63f86dca1'
-         '0f4ea29bfa687508ebaaefd0de5199dc')
+source=("https://sourceforge.net/projects/glew/files/glew/${pkgver}/${_realname}-${pkgver}.tgz"
+        001-makefile.patch
+        002-fix-crash-win32.patch)
+sha256sums=('c572c30a4e64689c342ba1624130ac98936d7af90c3103f9ce12b8a0c5736764'
+            '922be0db07e92950a20e87b876dde7c05052bb2d3dcfff23468cf4ab02887f88'
+            'b3d08e251288994ceb19ecb734e83a0b3f370ca511be5aa46051a298a70ba1a6')
 
 prepare() {
-  cd "$srcdir/glew-$pkgver"
+  cd "${srcdir}/${_realname}-${pkgver}"
   patch -p1 -i ${srcdir}/001-makefile.patch
+  patch -p1 -i ${srcdir}/002-fix-crash-win32.patch
 }
 
 build() {
-  cd "$srcdir/glew-$pkgver"
+  [[ -d "${srcdir}/build-${MINGW_CHOST}" ]] && rm -rf "${srcdir}/build-${MINGW_CHOST}"
+  cp -rf "${srcdir}/${_realname}-${pkgver}" "${srcdir}/build-${MINGW_CHOST}" && \
+     cd "${srcdir}/build-${MINGW_CHOST}"
   MSYSTEM=MINGW make GLEW_PREFIX=${MINGW_PREFIX}
 }
 
 package () {
-  cd "$srcdir/glew-$pkgver"
+  cd "${srcdir}/build-${MINGW_CHOST}"
   MSYSTEM=MINGW make GLEW_PREFIX=${MINGW_PREFIX} DESTDIR="${pkgdir}" install.all
 }

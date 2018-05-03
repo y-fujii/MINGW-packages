@@ -1,9 +1,10 @@
 # Maintainer: Andrew Chadwick <a.t.chadwick@gmail.com>
 
 _realname=json-c
+pkgbase=mingw-w64-${_realname}
 pkgname=("${MINGW_PACKAGE_PREFIX}-${_realname}")
 pkgver=0.12
-pkgrel=1
+pkgrel=2
 arch=('any')
 pkgdesc="A JSON implementation in C."
 url='https://github.com/json-c/json-c'
@@ -11,15 +12,15 @@ depends=("")
 makedepends=("")
 options=('strip' '!debug' 'staticlibs')
 license=('MIT')
-source=("http://s3.amazonaws.com/json-c_releases/releases/${_realname}-${pkgver}.tar.gz")
-md5sums=('3ca4bbb881dfc4017e8021b5e0a8c491')
+source=("https://s3.amazonaws.com/json-c_releases/releases/${_realname}-${pkgver}.tar.gz")
+sha256sums=('000c01b2b3f82dcb4261751eb71f1b084404fb7d6a282f06074d3c17078b9f3f')
 
 prepare() {
-  cd "$srcdir/${_realname}-${pkgver/_/-}"
+  cd "${srcdir}/${_realname}-${pkgver/_/-}"
 }
 
 build() {
-  cd "$srcdir/${_realname}-${pkgver/_/-}"
+  cd "${srcdir}/${_realname}-${pkgver/_/-}"
   # sh autogen.sh  # only for github release tarballs
   CFLAGS="-Wno-error=unused-but-set-variable -Wno-error=unknown-pragmas $CFLAGS"
   export CFLAGS
@@ -28,7 +29,7 @@ build() {
 }
 
 package() {
-  cd "$srcdir/${_realname}-${pkgver/_/-}"
+  cd "${srcdir}/${_realname}-${pkgver/_/-}"
   make DESTDIR="${pkgdir}" install
   install -D COPYING ${pkgdir}${MINGW_PREFIX}/share/licenses/${_realname}/COPYING
 }

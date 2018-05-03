@@ -1,37 +1,37 @@
 # Maintainer: Alexey Pavlov <alexpux@gmail.com>
 
 _realname=libpng
+pkgbase=mingw-w64-${_realname}
 pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}"
-pkgver=1.6.16
+pkgver=1.6.34
 pkgrel=1
 arch=('any')
 pkgdesc="A collection of routines used to create PNG format graphics (mingw-w64)"
-depends=("${MINGW_PACKAGE_PREFIX}-zlib" "${MINGW_PACKAGE_PREFIX}-gcc-libs")
+depends=("${MINGW_PACKAGE_PREFIX}-gcc-libs"
+         "${MINGW_PACKAGE_PREFIX}-zlib")
 makedepends=("${MINGW_PACKAGE_PREFIX}-gcc")
-groups=("${MINGW_PACKAGE_PREFIX}")
 license=('custom')
 url="http://www.libpng.org/pub/png/libpng.html"
 options=('strip' '!libtool' 'staticlibs')
-source=("http://downloads.sourceforge.net/sourceforge/libpng/libpng-$pkgver.tar.xz"
-        "http://downloads.sourceforge.net/project/libpng-apng/libpng16/$pkgver/libpng-$pkgver-apng.patch.gz")
-
-md5sums=('23b7286b5d4a86de950fd2ffc5cac742'
-         '52de72a29e5d0428a0e527be74b99c24')
+source=("https://downloads.sourceforge.net/sourceforge/libpng/${_realname}-${pkgver}.tar.xz"{,.asc}
+        "https://downloads.sourceforge.net/project/libpng-apng/libpng16/${pkgver}/${_realname}-${pkgver}-apng.patch.gz")
+sha256sums=('2f1e960d92ce3b3abd03d06dfec9637dfbd22febf107a536b44f7a47c60659f6'
+            'SKIP'
+            'e661944e54574a3f26927ac9eb7e2788f3a2675545a19735b83fbb9adcb544c1')
+validpgpkeys=('8048643BA2C840F4F92A195FF54984BFA16C640F')  # Glenn Randers-Pehrson (mozilla) <glennrp+bmo@gmail.com>
 
 prepare() {
-  cd "$srcdir/libpng-$pkgver"
+  cd "${srcdir}/${_realname}-${pkgver}"
 
   # Add animated PNG (apng) support
-  # see http://sourceforge.net/projects/libpng-apng/
-  patch -p1 -i "${srcdir}/libpng-$pkgver-apng.patch"
+  patch -p1 -i "${srcdir}/${_realname}-${pkgver}-apng.patch"
 }
 
 build() {
-  cd "$srcdir/libpng-$pkgver"
-
-  mkdir -p "${srcdir}/build-${CARCH}"
-  cd "${srcdir}/build-${CARCH}"
-  ../libpng-${pkgver}/configure \
+  [[ -d "${srcdir}/build-${MINGW_CHOST}" ]] && rm -rf "${srcdir}/build-${MINGW_CHOST}"
+  mkdir -p "${srcdir}/build-${MINGW_CHOST}"
+  cd "${srcdir}/build-${MINGW_CHOST}"
+  ../"${_realname}-${pkgver}"/configure \
     --build=${MINGW_CHOST} \
     --host=${MINGW_CHOST} \
     --target=${MINGW_CHOST} \
@@ -42,8 +42,8 @@ build() {
 }
 
 package () {
-  cd "${srcdir}/build-${CARCH}"
+  cd "${srcdir}/build-${MINGW_CHOST}"
   make install DESTDIR="${pkgdir}"
 
-  install -D -m644 "${srcdir}/libpng-${pkgver}/LICENSE" "${pkgdir}${MINGW_PREFIX}/share/licenses/$_realname/LICENSE"
+  install -D -m644 "${srcdir}/libpng-${pkgver}/LICENSE" "${pkgdir}${MINGW_PREFIX}/share/licenses/${_realname}/LICENSE"
 }

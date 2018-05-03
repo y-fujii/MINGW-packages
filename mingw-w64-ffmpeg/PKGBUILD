@@ -1,13 +1,14 @@
 # Maintainer: Alexey Pavlov <Alexpux@gmail.com>
+# Contributer: Zach Bacon <11doctorwhocanada@gmail.com>
 
 _realname=ffmpeg
-pkgname=("${MINGW_PACKAGE_PREFIX}-${_realname}")
-pkgver=2.5.4
+pkgbase="mingw-w64-${_realname}"
+pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}"
+pkgver=3.4.1
 pkgrel=1
 pkgdesc="Complete and free Internet live audio and video broadcasting solution (mingw-w64)"
 arch=('any')
-url="http://ffmpeg.org/"
-groups=("${MINGW_PACKAGE_PREFIX}")
+url="https://ffmpeg.org/"
 license=('GPL')
 options=('staticlibs' 'strip')
 depends=(
@@ -27,31 +28,33 @@ depends=(
         "${MINGW_PACKAGE_PREFIX}-libwebp"
         "${MINGW_PACKAGE_PREFIX}-openal"
         "${MINGW_PACKAGE_PREFIX}-opencore-amr"
-        "${MINGW_PACKAGE_PREFIX}-openjpeg"
+        "${MINGW_PACKAGE_PREFIX}-openjpeg2"
         "${MINGW_PACKAGE_PREFIX}-opus"
         "${MINGW_PACKAGE_PREFIX}-rtmpdump"
-        "${MINGW_PACKAGE_PREFIX}-schroedinger"
-        "${MINGW_PACKAGE_PREFIX}-SDL"
+        "${MINGW_PACKAGE_PREFIX}-SDL2"
         "${MINGW_PACKAGE_PREFIX}-speex"
+        "${MINGW_PACKAGE_PREFIX}-wavpack"
         "${MINGW_PACKAGE_PREFIX}-x264"
         "${MINGW_PACKAGE_PREFIX}-x265"
         "${MINGW_PACKAGE_PREFIX}-xvidcore"
-        "${MINGW_PACKAGE_PREFIX}-wavpack"
         "${MINGW_PACKAGE_PREFIX}-zlib"
         )
-makedepends=("yasm" "${MINGW_PACKAGE_PREFIX}-gcc" "${MINGW_PACKAGE_PREFIX}-pkg-config")
-source=(http://ffmpeg.org/releases/$_realname-$pkgver.tar.bz2)
-md5sums=('af92a816b642d32134a764d2d7f55b75')
+makedepends=("${MINGW_PACKAGE_PREFIX}-gcc"
+             "${MINGW_PACKAGE_PREFIX}-pkg-config"
+             "${MINGW_PACKAGE_PREFIX}-nasm")
+source=(https://ffmpeg.org/releases/${_realname}-${pkgver}.tar.xz{,.asc})
+validpgpkeys=('FCF986EA15E6E293A5644F10B4322F04D67658D8')
+sha256sums=('5a77278a63741efa74e26bf197b9bb09ac6381b9757391b922407210f0f991c0'
+            'SKIP')
 
 prepare() {
   cd "${srcdir}/${_realname}-${pkgver}"
 }
 
 build() {
+  [[ -d "build-${MINGW_CHOST}" ]] && rm -rf "build-${MINGW_CHOST}"
   mkdir -p "${srcdir}/build-${MINGW_CHOST}"
   cd "${srcdir}/build-${MINGW_CHOST}"
-  #CPPFLAGS+=" --save-temps"
-  #CFLAGS+=" --save-temps"
 
   ../${_realname}-${pkgver}/configure \
     --prefix=${MINGW_PREFIX} \
@@ -61,6 +64,7 @@ build() {
     --disable-static \
     --enable-avresample \
     --enable-dxva2 \
+    --enable-d3d11va \
     --enable-fontconfig \
     --enable-gnutls \
     --enable-gpl \
@@ -77,7 +81,6 @@ build() {
     --enable-libopenjpeg \
     --enable-libopus \
     --enable-librtmp \
-    --enable-libschroedinger \
     --enable-libspeex \
     --enable-libtheora \
     --enable-libvorbis \
@@ -85,22 +88,27 @@ build() {
     --enable-libx265 \
     --enable-libxvid \
     --enable-libvpx \
+    --enable-libwebp \
     --enable-openal \
     --enable-libwavpack \
     --enable-pic \
     --enable-postproc \
     --enable-runtime-cpudetect \
     --enable-shared \
+    --enable-static \
     --enable-swresample \
     --enable-version3 \
     --enable-zlib \
     --disable-doc
     #--enable-pthreads
+
   make
 }
 
 check() {
   cd "${srcdir}/build-${MINGW_CHOST}"
+  # workaround for conflict with SDL main(), use it if you have SDL installed
+  #make check CC_C="-c -Umain"
   make check
 }
 
@@ -110,4 +118,9 @@ package() {
   mv "${pkgdir}${MINGW_PREFIX}"/bin/*.lib "${pkgdir}${MINGW_PREFIX}"/lib/
 
   #find ${pkgdir}${MINGW_PREFIX}/bin -type f -name "*.exe" -exec objcopy --subsystem console {} \;
+  rm -f ${pkgdir}${MINGW_PREFIX}/lib/*.def
+  rm -f ${pkgdir}${MINGW_PREFIX}/lib/*.lib
+  
+  local PREFIX_DEPS=$(cygpath -am ${MINGW_PREFIX})
+  find ${pkgdir}${MINGW_PREFIX}/lib/pkgconfig -name *.pc -exec sed -i -e"s|${PREFIX_DEPS}|${MINGW_PREFIX}|g" {} \;
 }

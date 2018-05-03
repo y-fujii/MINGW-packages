@@ -1,9 +1,9 @@
 # Maintainer: Alexey Pavlov <alexpux@gmail.com>
 
 _realname=dbus-glib
-
+pkgbase=mingw-w64-${_realname}
 pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}"
-pkgver=0.102
+pkgver=0.108
 pkgrel=1
 arch=('any')
 pkgdesc="D-Bus Message Bus System (mingw-w64)"
@@ -11,10 +11,10 @@ depends=("${MINGW_PACKAGE_PREFIX}-glib2" "${MINGW_PACKAGE_PREFIX}-dbus" "${MINGW
 makedepends=("${MINGW_PACKAGE_PREFIX}-gcc" "${MINGW_PACKAGE_PREFIX}-pkg-config" )
 options=('strip' 'staticlibs')
 license=("BSD")
-url="http://www.freedesktop.org/wiki/Software/dbus"
-source=("http://dbus.freedesktop.org/releases/${_realname}/${_realname}-${pkgver}.tar.gz"{,.asc})
-md5sums=('f76b8558fd575d0106c3a556eaa49184'
-         'SKIP')
+url="https://www.freedesktop.org/wiki/Software/dbus"
+source=("https://dbus.freedesktop.org/releases/${_realname}/${_realname}-${pkgver}.tar.gz"{,.asc})
+sha256sums=('9f340c7e2352e9cdf113893ca77ca9075d9f8d5e81476bf2bf361099383c602c'
+            'SKIP')
 
 prepare() {
   cd "${srcdir}"/${_realname}-${pkgver}
@@ -31,14 +31,12 @@ build() {
     --target=${MINGW_CHOST} \
     --build=${MINGW_CHOST} \
     --enable-shared \
-    --disable-static
+    --enable-static
+
   make
 }
 
 package() {
-  cd "$srcdir/build-${MINGW_CHOST}"
-  make DESTDIR=$pkgdir install
-  find "${pkgdir}${MINGW_PREFIX}" -name '*.def' -o -name '*.exp' | xargs -rtl1 rm
-  #rm -rf "${pkgdir}${MINGW_PREFIX}"/share/man
-  #rm -rf "${pkgdir}${MINGW_PREFIX}"/{etc,var,libexec,share}
+  cd "${srcdir}/build-${MINGW_CHOST}"
+  make DESTDIR=${pkgdir} install
 }

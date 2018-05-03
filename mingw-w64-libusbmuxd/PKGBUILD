@@ -1,26 +1,26 @@
 # Maintainer: Ray Donnelly <mingw.android@gmail.com>
 
 _realname=libusbmuxd
+pkgbase=mingw-w64-${_realname}
 pkgname=("${MINGW_PACKAGE_PREFIX}-${_realname}")
 pkgver=1.0.10
-pkgrel=2
+pkgrel=3
 pkgdesc='A client library to multiplex connections from and to iOS devices (mingw-w64)'
-groups=("${MINGW_PACKAGE_PREFIX}" "xdev")
 arch=('any')
 url='http://www.libimobiledevice.org/'
 license=('GPL2+')
 options=('staticlibs')
 source=("http://www.libimobiledevice.org/downloads/${_realname}-${pkgver}.tar.bz2")
 depends=("${MINGW_PACKAGE_PREFIX}-libplist")
-sha1sums=('9d4ce8ac058cfea66e6785d2bad5bb9c93681b16')
+sha256sums=('1aa21391265d2284ac3ccb7cf278126d10d354878589905b35e8102104fec9f2')
 
 prepare() {
-  cd $srcdir/${_realname}-${pkgver}
+  cd ${srcdir}/${_realname}-${pkgver}
 }
 
 build() {
-  cd "$srcdir"/${_realname}-${pkgver}
-  [ -d "${srcdir}"/build-${CARCH} ] && rm -rf "${srcdir}"/build-${CARCH}
+  cd "${srcdir}"/${_realname}-${pkgver}
+  [[ -d "${srcdir}"/build-${CARCH} ]] && rm -rf "${srcdir}"/build-${CARCH}
   mkdir -p "${srcdir}"/build-${CARCH} && cd "${srcdir}"/build-${CARCH}
 
   ../${_realname}-${pkgver}/configure \
@@ -30,6 +30,7 @@ build() {
     --target=${MINGW_CHOST} \
     --enable-static \
     --enable-shared
+
   make
 }
 

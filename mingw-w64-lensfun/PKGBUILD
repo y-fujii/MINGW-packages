@@ -1,42 +1,52 @@
 # Maintainer: Alexey Pavlov <alexpux@gmail.com>
 
 _realname=lensfun
+pkgbase=mingw-w64-${_realname}
 pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}"
-pkgver=0.3.0
-pkgrel=1
+pkgver=0.3.2
+pkgrel=4
 pkgdesc="Database of photographic lenses and a library that allows advanced access to the database (mingw-w64)"
 arch=('any')
-url="http://lensfun.sourceforge.net"
+url="https://lensfun.sourceforge.io"
 license=("LGPL3")
-makedepends=("${MINGW_PACKAGE_PREFIX}-gcc" "${MINGW_PACKAGE_PREFIX}-pkg-config" "${MINGW_PACKAGE_PREFIX}-python2")
+makedepends=("${MINGW_PACKAGE_PREFIX}-gcc"
+             "${MINGW_PACKAGE_PREFIX}-pkg-config"
+             "${MINGW_PACKAGE_PREFIX}-python3"
+             "${MINGW_PACKAGE_PREFIX}-cmake")
 depends=("${MINGW_PACKAGE_PREFIX}-glib2"
          "${MINGW_PACKAGE_PREFIX}-libpng"
          "${MINGW_PACKAGE_PREFIX}-libsystre"
          "${MINGW_PACKAGE_PREFIX}-zlib")
 options=('staticlibs' 'strip')
-source=(http://sourceforge.net/projects/lensfun/files/${pkgver}/${_realname}-${pkgver}.tar.bz2
+source=(https://sourceforge.net/projects/lensfun/files/${pkgver}/${_realname}-${pkgver}.tar.gz
+        lensfun-update-data.patch
         cmake-mingw.patch)
-md5sums=('c553cb37f1b781d1af05787beacf0193'
-         'aedb52587330ebbcd48525b3c6f006d4')
+sha256sums=('ae8bcad46614ca47f5bda65b00af4a257a9564a61725df9c74cb260da544d331'
+            '337a784c9d04d1a6a3da366d92df1621012ef00e486d38d87659b33c46ae0912'
+            'b1f6f14af5d06fbe27b6364fb2452a8c6585724b68ecd3d3844e040d5a650e78')
 
 prepare(){
-  cd "$srcdir/${_realname}-$pkgver"
-
+  cd "${srcdir}/${_realname}-${pkgver}"
   patch -p1 -i "${srcdir}/cmake-mingw.patch"
+  patch -p1 -i "${srcdir}/lensfun-update-data.patch"
 }
 
 build() {
-  mkdir $srcdir/build-${MINGW_CHOST}
-  cd $srcdir/build-${MINGW_CHOST}
+  [[ -d ${srcdir}/build-${MINGW_CHOST} ]] && rm -rf ${srcdir}/build-${MINGW_CHOST}
+  mkdir ${srcdir}/build-${MINGW_CHOST}
+  cd ${srcdir}/build-${MINGW_CHOST}
 
   [[ $CARCH == x86_64 ]] && ENABLESSE2="-DBUILD_FOR_SSE2=ON"
+  MSYS2_ARG_CONV_EXCL="-DCMAKE_INSTALL_PREFIX=" \
   ${MINGW_PREFIX}/bin/cmake \
     -G"MSYS Makefiles" \
-    -DCMAKE_INSTALL_PREFIX:PATH=${pkgdir}${MINGW_PREFIX} \
+    -DCMAKE_INSTALL_PREFIX=${MINGW_PREFIX} \
+    -DSETUP_PY_INSTALL_PREFIX=${srcdir}/dest${MINGW_PREFIX} \
     -DBUILD_STATIC=OFF \
     -DBUILD_AUXFUN=ON \
     -DBUILD_TESTS=OFF \
     -DBUILD_FOR_SSE=ON \
+    -DBUILD_DOC=OFF \
     $ENABLESSE2 \
     ../${_realname}-${pkgver}
 
@@ -44,12 +54,8 @@ build() {
 }
 
 package() {
-  cd "$srcdir/build-${MINGW_CHOST}"
-  make install
+  cd "${srcdir}/build-${MINGW_CHOST}"
+  make DESTDIR=${pkgdir} install
 
-  pushd ${pkgdir}${MINGW_PREFIX} > /dev/null
-  export PREFIX_WIN=`pwd -W`
-  popd > /dev/null
-
-  sed -i "s|${PREFIX_WIN}|${MINGW_PREFIX}|g" ${pkgdir}${MINGW_PREFIX}/lib/pkgconfig/lensfun.pc
+  cp -rf ${srcdir}/dest${MINGW_PREFIX}/* ${pkgdir}${MINGW_PREFIX}/
 }

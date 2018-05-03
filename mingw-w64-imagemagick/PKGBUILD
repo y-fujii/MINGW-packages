@@ -1,21 +1,23 @@
 # Maintainer: Alexey Pavlov <alexpux@gmail.com>
 
 _realname=imagemagick
+pkgbase="mingw-w64-${_realname}"
 pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}"
-pkgver=6.9.0.6
+pkgver=7.0.6.7
 pkgrel=1
 pkgdesc="An image viewing/manipulation program (mingw-w64)"
 arch=('any')
-url="http://www.imagemagick.org/"
+url="https://www.imagemagick.org/"
 license=("custom")
-makedepends=("${MINGW_PACKAGE_PREFIX}-gcc"
-            "${MINGW_PACKAGE_PREFIX}-pkg-config"
-            "${MINGW_PACKAGE_PREFIX}-pango"
-            "${MINGW_PACKAGE_PREFIX}-cairo"
-            "${MINGW_PACKAGE_PREFIX}-openexr"
-            "${MINGW_PACKAGE_PREFIX}-librsvg"
-            "${MINGW_PACKAGE_PREFIX}-libxml2"
-            "${MINGW_PACKAGE_PREFIX}-ghostscript")
+makedepends=("${MINGW_PACKAGE_PREFIX}-cairo"
+             "${MINGW_PACKAGE_PREFIX}-gcc"
+             "${MINGW_PACKAGE_PREFIX}-ghostscript"
+             "${MINGW_PACKAGE_PREFIX}-librsvg"
+             "${MINGW_PACKAGE_PREFIX}-libxml2"
+             "${MINGW_PACKAGE_PREFIX}-openexr"
+             "${MINGW_PACKAGE_PREFIX}-pango"
+             "${MINGW_PACKAGE_PREFIX}-pkg-config"
+            )
 depends=("${MINGW_PACKAGE_PREFIX}-bzip2"
          "${MINGW_PACKAGE_PREFIX}-djvulibre"
          "${MINGW_PACKAGE_PREFIX}-fftw"
@@ -24,6 +26,7 @@ depends=("${MINGW_PACKAGE_PREFIX}-bzip2"
          "${MINGW_PACKAGE_PREFIX}-glib2"
          "${MINGW_PACKAGE_PREFIX}-jasper"
          "${MINGW_PACKAGE_PREFIX}-jbigkit"
+         "${MINGW_PACKAGE_PREFIX}-libraqm"
          "${MINGW_PACKAGE_PREFIX}-lcms2"
          "${MINGW_PACKAGE_PREFIX}-liblqr"
          "${MINGW_PACKAGE_PREFIX}-libpng"
@@ -45,39 +48,49 @@ optdepends=("${MINGW_PACKAGE_PREFIX}-ghostscript: for Ghostscript support"
             #"${MINGW_PACKAGE_PREFIX}-libwebp: for WEBP support"
             )
 options=('staticlibs' 'strip' '!debug' 'libtool')
-source=(http://www.imagemagick.org/download/ImageMagick-${pkgver%.*}-${pkgver##*.}.tar.xz{,.asc}
-        ImageMagick-6.8.8.1-mingw.patch
-        001-relocate.patch
-        002-build-fixes.patch
-        winpath.patch)
-md5sums=('fd481f9fdee33ab218184a1412bae93d'
-         'SKIP'
-         'c95a23e8562dbab4e6b0e5407da25209'
-         '7821087a00c459c0d3482508fdc1e25e'
-         '144cbba6043eb70f8dd80c4e1713cf30'
-         'b0b634231da667d7472522fc08fd3519')
+source=(https://www.imagemagick.org/download/ImageMagick-${pkgver%.*}-${pkgver##*.}.tar.xz{,.asc}
+        ImageMagick-7.0.1.3-mingw.patch
+        001-7.0.4.1-relocate.patch
+        002-7.0.4.1-build-fixes.patch
+        003-7.0.1.8-cplusplus-fixes.patch)
+sha256sums=('732332a76cb62f067d680a90d85dd05a2f2592e0017af83becb639d05681106d'
+            'SKIP'
+            '313e781918c66a2acfdbd99fab3de2fd680c34efdaaab18318d7543d4c79bb3e'
+            'c4170e9d32cd3f2a4003d1a4a34d24993dac17dff940158314313845062ada59'
+            '7f128cde0a42a160b7838f6af5a673eb91ccd2b0efa9861780c48f967394cf8b'
+            'f628755b79753c00a22471a9562f5abcba67702f2156b38aa0e9b83d3644960a')
+#Lexie Parsimoniae (ImageMagick code signing key) <lexie.parsimoniae@imagemagick.org>
+validpgpkeys=('D8272EF51DA223E4D05B466989AB63D48277377A')
 
 prepare() {
   cd ImageMagick-${pkgver%.*}-${pkgver##*.}
-  patch -p1 -i ${srcdir}/ImageMagick-6.8.8.1-mingw.patch
-  patch -p1 -i ${srcdir}/001-relocate.patch
-  patch -p1 -i ${srcdir}/002-build-fixes.patch
-  #patch -p1 -i ${srcdir}/winpath.patch
+  rm -f MagickCore/pathtools{.c,.h} > /dev/null 2>&1 || true
+  msg2 "ImageMagick-7.0.1.3-mingw.patch"
+  patch -p1 -i ${srcdir}/ImageMagick-7.0.1.3-mingw.patch
+  msg2 "001-7.0.1.3-relocate.patch"
+  patch -p1 -i ${srcdir}/001-7.0.4.1-relocate.patch
+  msg2 "002-7.0.4.1-build-fixes.patch"
+  patch -p1 -i ${srcdir}/002-7.0.4.1-build-fixes.patch
+  msg2 "003-7.0.1.8-cplusplus-fixes.patch"
+  patch -p1 -i ${srcdir}/003-7.0.1.8-cplusplus-fixes.patch
   autoreconf -fi
 }
 
 build() {
   export lt_cv_deplibs_check_method='pass_all'
   [[ $CARCH = "i686" ]] && EXTRAOPTS="--with-gcc-arch=i686"
-  [[ $CARCH = "x86_64" ]] && EXTRAOPTS="--with-gcc-arch=x86-64"
+  [[ $CARCH = "x86_64" ]] && EXTRAOPTS="" #EXTRAOPTS="--with-gcc-arch=x86-64"
 
-  #cd ImageMagick-${pkgver%.*}-${pkgver##*.}
+  [[ -d build-${MINGW_CHOST} ]] && rm -rf build-${MINGW_CHOST}
+  # We can't use Magic++ portion due to a bug:
+  # https://github.com/ImageMagick/ImageMagick/issues/188
   mkdir -p build-${MINGW_CHOST} && cd build-${MINGW_CHOST}
   ../ImageMagick-${pkgver%.*}-${pkgver##*.}/configure \
     --prefix=${MINGW_PREFIX} \
     --build=${MINGW_CHOST} \
     --host=${MINGW_CHOST} \
     --disable-deprecated \
+    --enable-legacy-support \
     --enable-hdri \
     --with-djvu \
     --with-fftw \
@@ -88,6 +101,7 @@ build() {
     --with-modules \
     --with-openexr \
     --with-openjp2 \
+    --enable-opencl \
     --with-rsvg \
     --with-webp \
     --with-wmf \
@@ -99,10 +113,16 @@ build() {
     --without-ltdl \
     --without-perl \
     --without-x \
+    --with-lraqm \
+    --with-magick-plus-plus \
     --with-windows-font-dir=c:/Windows/fonts \
-    $EXTRAOPTS
+    $EXTRAOPTS \
+    CFLAGS="${CFLAGS}" CPPFLAGS="${CPPFLAGS}" LDFLAGS="${LDFLAGS}"
 
-  make
+  if check_option "debug" "y"; then
+    MAKE_VERBOSE="V=1"
+  fi
+  make ${MAKE_VERBOSE}
 
     #--enable-opencl \
     # --with-gs-font-dir=${MINGW_PREFIX}/ \
@@ -114,10 +134,19 @@ build() {
 
 package() {
   cd ${srcdir}/build-${MINGW_CHOST}
-  make -j1 DESTDIR="${pkgdir}" install
+  if check_option "debug" "y"; then
+    MAKE_VERBOSE="V=1"
+  fi
+  make -j1 DESTDIR="${pkgdir}" install ${MAKE_VERBOSE}
 
   #find . -name "*.xml" -exec sed -i "s/${MINGW_PREFIX}/newWord/g" '{}' \;
 
   install -Dm644 ${srcdir}/ImageMagick-${pkgver%.*}-${pkgver##*.}/LICENSE "${pkgdir}${MINGW_PREFIX}/share/licenses/${_realname}/LICENSE"
   install -Dm644 ${srcdir}/ImageMagick-${pkgver%.*}-${pkgver##*.}/NOTICE "${pkgdir}${MINGW_PREFIX}/share/licenses/${_realname}/NOTICE"
+
+  local PREFIX_WIN=$(cygpath -wm ${MINGW_PREFIX})
+  # fix hard-coded pathes in .pc files
+  for _f in "${pkgdir}${MINGW_PREFIX}"\/lib\/pkgconfig\/*.pc; do
+    sed -e "s|${PREFIX_WIN}|${MINGW_PREFIX}|g" -i ${_f}
+  done
 }

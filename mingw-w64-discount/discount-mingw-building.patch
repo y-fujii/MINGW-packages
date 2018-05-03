@@ -1,6 +1,6 @@
---- configure.inc.orig	2013-12-06 10:26:52.855400000 +0400
-+++ configure.inc	2013-12-06 13:49:37.149800000 +0400
-@@ -725,7 +725,11 @@
+--- discount-2.2.2/configure.inc.orig	2017-01-19 05:42:06.000000000 +0300
++++ discount-2.2.2/configure.inc	2017-02-01 15:39:01.087821900 +0300
+@@ -749,7 +749,11 @@
      if [ "$DEST" ]; then
  	rm -f /tmp/b$$
  	$DEST -s /tmp/a$$ /tmp/b$$
@@ -13,7 +13,7 @@
  	    TLOG " ($DEST)"
  	    echo "$DEST exists, and ln -s works"
  	    PROG_LN_S="$DEST -s"
-@@ -1207,6 +1211,9 @@
+@@ -1274,6 +1278,9 @@
      AC_PROG_CC
  
      LOGN "checking for C compiler option to produce PIC "
@@ -23,7 +23,7 @@
      echo "int some_variable = 0;" > ngc$$.c 
  
      if $AC_CC -c -fPIC -o ngc$$ ngc$$.c $LIBS; then
-@@ -1219,6 +1226,7 @@
+@@ -1286,6 +1293,7 @@
      fi
      __remove ngc$$ ngc$$.c
      return $__rc
@@ -31,7 +31,7 @@
  }
  
  
-@@ -1311,6 +1319,41 @@
+@@ -1380,6 +1388,41 @@
      chmod +x librarian.sh
  }
  
@@ -73,7 +73,7 @@
  
  #
  # AC_CC_SHLIBS checks if the C compiler can produce shared libraries
-@@ -1335,6 +1378,10 @@
+@@ -1404,6 +1447,10 @@
  	    LOG "(no)"
  	    __rc=1
  	fi
@@ -84,3 +84,52 @@
      elif $AC_CC $AC_PICFLAG -shared -o ngc$$.so ngc$$.c; then
  	__AC_ELF_LIBRARIAN
          LOG "(yes; -shared)"
+@@ -1460,7 +1507,7 @@
+ 
+     AC_SUB 'INSTALL' "$PROG_INSTALL"
+     AC_SUB 'INSTALL_PROGRAM' "$PROG_INSTALL -s -m 755"
+-    AC_SUB 'INSTALL_DATA' "$PROG_INSTALL -m 444"
++    AC_SUB 'INSTALL_DATA' "$PROG_INSTALL -m 644"
+ 
+     # finally build a little directory installer
+     # if mkdir -p works, use that, otherwise use install -d,
+--- discount-2.2.2/Makefile.in.orig	2017-02-01 15:51:04.182675800 +0300
++++ discount-2.2.2/Makefile.in	2017-02-01 15:51:48.269775800 +0300
+@@ -4,10 +4,11 @@
+ AR=@AR@
+ RANLIB=@RANLIB@
+ 
+-BINDIR=@exedir@
+-MANDIR=@mandir@
+-LIBDIR=@libdir@
+-INCDIR=@prefix@/include
++PREFIX=/usr
++BINDIR=$(PREFIX)/bin
++MANDIR=$(PREFIX)/share/man
++LIBDIR=$(PREFIX)/lib
++INCDIR=$(PREFIX)/include
+ @MK_PKGCONFIG@PKGDIR=$(LIBDIR)/pkgconfig
+ 
+ PGMS=markdown
+@@ -30,10 +30,10 @@
+ 	./librarian.sh install libmarkdown VERSION $(DESTDIR)$(LIBDIR)
+ 	@INSTALL_DATA@ mkdio.h $(DESTDIR)$(INCDIR)
+ 
+-@MK_PKGCONFIG@$(DESTDIR)$(PKGDIR)/$(MKDLIB).pc: $(MKDLIB).pc $(DESTDIR)$(PKGDIR)
++@MK_PKGCONFIG@install.pkgconfig: $(MKDLIB).pc $(DESTDIR)$(PKGDIR)
+ @MK_PKGCONFIG@	@INSTALL_DATA@ $(MKDLIB).pc $(DESTDIR)$(PKGDIR)
+ 
+-install.everything: install install.samples install.man
++install.everything: install install.samples install.man install.pkgconfig
+ 
+ install.samples: $(SAMPLE_PGMS) install $(DESTDIR)$(BINDIR)
+ 	@INSTALL_DIR@ $(DESTDIR)$(MANDIR)/man1
+@@ -58,8 +58,6 @@
+ 	@INSTALL_DATA@ markdown.7 mkd-extensions.7 $(DESTDIR)$(MANDIR)/man7
+ 	@INSTALL_DIR@ $(DESTDIR)$(MANDIR)/man1
+ 	@INSTALL_DATA@ markdown.1 $(DESTDIR)$(MANDIR)/man1
+-
+-install.everything: install install.man
+ 
+ $(DESTDIR)$(BINDIR):
+ 	@INSTALL_DIR@ $(DESTDIR)$(BINDIR)

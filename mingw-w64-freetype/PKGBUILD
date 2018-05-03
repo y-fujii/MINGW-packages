@@ -2,36 +2,36 @@
 # Contributor: Renato Silva <br.renatosilva@gmail.com>
 
 _realname=freetype
+pkgbase=mingw-w64-${_realname}
 pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}"
-pkgver=2.5.5
-pkgrel=3
+pkgver=2.8.1
+pkgrel=1
 pkgdesc="TrueType font rendering library (mingw-w64)"
 arch=('any')
-url="http://www.freetype.org/"
+url="https://www.freetype.org/"
 license=(GPL2+ custom:FreeType)
 depends=("${MINGW_PACKAGE_PREFIX}-gcc-libs"
          "${MINGW_PACKAGE_PREFIX}-bzip2"
-         "${MINGW_PACKAGE_PREFIX}-libpng"
          "${MINGW_PACKAGE_PREFIX}-harfbuzz"
+         "${MINGW_PACKAGE_PREFIX}-libpng"
          "${MINGW_PACKAGE_PREFIX}-zlib")
-makedepends=("${MINGW_PACKAGE_PREFIX}-gcc")
+makedepends=("${MINGW_PACKAGE_PREFIX}-gcc" "${MINGW_PACKAGE_PREFIX}-pkg-config")
 options=('strip' '!libtool' 'staticlibs')
-source=(http://downloads.sourceforge.net/sourceforge/freetype/freetype-${pkgver}.tar.bz2
-        freetype-2.2.1-enable-valid.patch
+source=(https://downloads.sourceforge.net/sourceforge/freetype/freetype-${pkgver}.tar.bz2
+        freetype-2.7-enable-valid.patch
         freetype-2.5.1-enable-spr.patch
-        freetype-2.5.1-enable-sph.patch
-        mingw-config.patch)
-md5sums=('2a7a314927011d5030903179cf183be0'
-         '214119610444c9b02766ccee5e220680'
-         '80a14cce234f3f190cd936ca9060c398'
-         '0636ba2ff074201e2ea5c47ac408bc63'
-         '9d62583e770c59af1c6bd19db89e7cf3')
+        freetype-2.5.1-enable-sph.patch)
+sha256sums=('e5435f02e02d2b87bb8e4efdcaa14b1f78c9cf3ab1ed80f94b6382fb6acc7d78'
+            '975d5a6eb1f6041fe5a497d7658f2e1ca2cfe5610dbd2e94ab375ad481b279d1'
+            '3ee5690d4d7cb48b8862e203d09b530805066cdfda0f51716b8ae2a47eef8b2d'
+            '324012ad68388d22c63368314721d2360b48dd40daa808d0383699a281d931b0')
 
 prepare() {
   cd "${srcdir}/freetype-${pkgver}"
-  patch -p1 -i "${srcdir}/freetype-2.2.1-enable-valid.patch"
+  plain "freetype-2.7-enable-valid.patch"
+  patch -p1 -i "${srcdir}/freetype-2.7-enable-valid.patch"
+  plain "freetype-2.5.1-enable-spr.patch"
   patch -p1 -i "${srcdir}/freetype-2.5.1-enable-spr.patch"
-  patch -p1 -i "${srcdir}/mingw-config.patch"
 
   # Disabled for now due to resistance
   # Kept here for easier rebuilds via ABS
@@ -40,6 +40,7 @@ prepare() {
 }
 
 build() {
+  [[ -d "${srcdir}/build-${CARCH}" ]] && rm -rf "${srcdir}/build-${CARCH}"
   mkdir -p "${srcdir}/build-${CARCH}"
   cd "${srcdir}/build-${CARCH}"
 
@@ -54,12 +55,16 @@ build() {
     --with-bzip2 \
     --with-png \
     --with-harfbuzz
+
   make
 }
 
 package () {
   cd "${srcdir}/build-${CARCH}"
   make DESTDIR="${pkgdir}" install
+
+  # Replace the absolute path.
+  sed -i "s|$(cygpath -m /)|/|g" ${pkgdir}${MINGW_PREFIX}/bin/freetype-config
 
   # Licenses
   install -Dm644 "${srcdir}/${_realname}-${pkgver}/docs/LICENSE.TXT" "${pkgdir}${MINGW_PREFIX}/share/licenses/${_realname}/LICENSE.TXT"

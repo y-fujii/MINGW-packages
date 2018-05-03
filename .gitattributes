@@ -2,14 +2,18 @@
 * text eol=lf
 
 # Denote all files that are truly binary and should not be modified
-*.bz2 binary
-*.gz binary
-*.xz binary
-*.exe binary
-*.dll binary
-*.lzma binary
-*.tgz binary
-*.zip binary
-*.rar binary
-*.lib binary
+*.7z binary
 *.a binary
+*.bz2 binary
+*.dll binary
+*.exe binary
+*.gz binary
+*.lib binary
+*.lzma binary
+*.msi binary
+*.rar binary
+*.so  binary
+*.tar binary
+*.tgz binary
+*.xz binary
+*.zip binary

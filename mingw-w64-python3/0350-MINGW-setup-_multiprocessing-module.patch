@@ -1,7 +1,7 @@
-diff -urN a/setup.py b/setup.py
---- a/setup.py	2014-10-11 14:20:05.461046200 +0100
-+++ b/setup.py	2014-10-11 14:20:08.299208600 +0100
-@@ -1512,7 +1512,7 @@
+diff -Naur Python-3.5.2-orig/setup.py Python-3.5.2/setup.py
+--- Python-3.5.2-orig/setup.py	2016-07-12 14:21:16.644300700 +0300
++++ Python-3.5.2/setup.py	2016-07-12 14:21:16.924800700 +0300
+@@ -1558,7 +1558,7 @@
              macros = dict()
              libraries = ['rt']
  
@@ -10,7 +10,7 @@ diff -urN a/setup.py b/setup.py
              multiprocessing_srcs = [ '_multiprocessing/multiprocessing.c',
                                       '_multiprocessing/semaphore.c',
                                     ]
-@@ -1525,8 +1525,12 @@
+@@ -1571,8 +1571,12 @@
                  multiprocessing_srcs.append('_multiprocessing/semaphore.c')
  
          if sysconfig.get_config_var('WITH_THREAD'):

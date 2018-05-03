@@ -1,6 +1,6 @@
-diff -urN a/Misc/python-config.sh.in b/Misc/python-config.sh.in
---- a/Misc/python-config.sh.in	2014-10-11 14:21:11.611829800 +0100
-+++ b/Misc/python-config.sh.in	2014-10-11 14:21:13.685948500 +0100
+diff -Naur Python-3.5.2-orig/Misc/python-config.sh.in Python-3.5.2/Misc/python-config.sh.in
+--- Python-3.5.2-orig/Misc/python-config.sh.in	2016-06-26 00:38:37.000000000 +0300
++++ Python-3.5.2/Misc/python-config.sh.in	2016-07-12 14:21:46.795800700 +0300
 @@ -1,25 +1,37 @@
  #!/bin/sh
  
@@ -42,7 +42,7 @@ diff -urN a/Misc/python-config.sh.in b/Misc/python-config.sh.in
 +    fi
 +    # Since we don't know where the output from this script will end up
 +    # we keep all paths in Windows-land since MSYS2 can handle that
-+    # whilst native tools can't handle paths in MSYS2-land.
++    # while native tools can't handle paths in MSYS2-land.
 +    if [ "$OSTYPE" = "msys" ]; then
 +        RESULT=$(cd "$RESULT" && pwd -W)
      fi
@@ -66,7 +66,7 @@ diff -urN a/Misc/python-config.sh.in b/Misc/python-config.sh.in
 +if [ "$ABIFLAGS" = "@""ABIFLAGS""@" ] ; then
 +    ABIFLAGS=
 +fi
- LIBS="@LIBS@ $SYSLIBS -lpython${VERSION}${ABIFLAGS}"
+ LIBS="-lpython${VERSION}${ABIFLAGS} @LIBS@ $SYSLIBS"
  BASECFLAGS="@BASECFLAGS@"
 -LDLIBRARY="@LDLIBRARY@"
 -LINKFORSHARED="@LINKFORSHARED@"
@@ -77,7 +77,7 @@ diff -urN a/Misc/python-config.sh.in b/Misc/python-config.sh.in
 +LINKFORSHARED="@LINKFORSHARED@"
  LIBDEST=${prefix}/lib/python${VERSION}
  LIBPL=$(echo "@LIBPL@" | sed "s#$prefix_build#$prefix_real#")
- SO="@SO@"
+ SO="@EXT_SUFFIX@"
 @@ -59,33 +74,33 @@
  do
      case $ARG in

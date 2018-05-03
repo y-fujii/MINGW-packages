@@ -1,56 +1,58 @@
 # Maintainer: Alexey Pavlov <alexpux@gmail.com>
 
 _realname=postgresql
+pkgbase=mingw-w64-${_realname}
 pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}"
-pkgver=9.4.1
+pkgver=10.1
 pkgrel=1
 pkgdesc="Libraries for use with PostgreSQL (mingw-w64)"
 arch=('any')
-url="http://www.postgresql.org/"
+url="https://www.postgresql.org/"
 license=('custom:PostgreSQL')
 makedepends=("${MINGW_PACKAGE_PREFIX}-gcc"
              "${MINGW_PACKAGE_PREFIX}-libxml2"
              "${MINGW_PACKAGE_PREFIX}-python2")
 depends=("${MINGW_PACKAGE_PREFIX}-gcc-libs"
-        "${MINGW_PACKAGE_PREFIX}-gettext"
-        "${MINGW_PACKAGE_PREFIX}-libxml2"
-        "${MINGW_PACKAGE_PREFIX}-openssl"
-        #"${MINGW_PACKAGE_PREFIX}-readline"
-        #"${MINGW_PACKAGE_PREFIX}-wineditline"
-        "${MINGW_PACKAGE_PREFIX}-zlib"
-        "${MINGW_PACKAGE_PREFIX}-tcl"
-        "${MINGW_PACKAGE_PREFIX}-libxslt"
-        "${MINGW_PACKAGE_PREFIX}-python2"
-        "winpty-git")
+         "${MINGW_PACKAGE_PREFIX}-gettext"
+         "${MINGW_PACKAGE_PREFIX}-libxml2"
+         "${MINGW_PACKAGE_PREFIX}-libxslt"
+         "${MINGW_PACKAGE_PREFIX}-openssl"
+         "${MINGW_PACKAGE_PREFIX}-python2"
+         "${MINGW_PACKAGE_PREFIX}-tcl"
+         #"${MINGW_PACKAGE_PREFIX}-readline"
+         #"${MINGW_PACKAGE_PREFIX}-wineditline"
+         "${MINGW_PACKAGE_PREFIX}-zlib"
+         "winpty")
 options=('staticlibs' 'strip')
-source=("http://ftp.postgresql.org/pub/source/v${pkgver}/postgresql-${pkgver}.tar.bz2"
+source=("https://ftp.postgresql.org/pub/source/v${pkgver}/postgresql-${pkgver}.tar.bz2"
         postgresql-9.4.1-mingw-link.patch
-        postgresql-9.4.1-pl-perl.patch
-        postgresql-9.4.1-pl-python.patch
+        postgresql-9.5.1-pl-perl.patch
+        postgresql-9.5.1-pl-python.patch
         postgresql-9.4.1-pl-tcl.patch
         postgresql-9.4.1-mingw-enable-readline.patch)
-md5sums=('2cf30f50099ff1109d0aa517408f8eff'
-         '1d1499234e555afa688f645ef3825450'
-         '572932c6f0fc795aba4d5bb91e1fe4ba'
-         '381c984fc2eb2c22c35aed62bedeb7fa'
-         'f4ebd4e26f7633354eee543690f2feb4'
-         'd93f0fd678bf16adfe10dc04e6d86789')
+sha256sums=('3ccb4e25fe7a7ea6308dea103cac202963e6b746697366d72ec2900449a5e713'
+            '0f2b5c7edb48dd106900854c9323ca2d483054595c4cf8a5b796a1d536d22aad'
+            '57c1e9b75c042af591b05b9dda60e6327b5c364bb5adc2675da8a48b47e11b81'
+            '6e2db558f0b85da2847c109fd7b7e1681bb97dccd805e8e03c1a7dba5e0a1af4'
+            'ab9c42374b4e8a01b598810b19b583d9ee7bf5c43c39c019f66b62aacac38926'
+            '51c72fbd380d23cf944165405221912a277b9be99e285479772b39cacbbf384f')
 
 prepare() {
-  cd ${srcdir}/postgresql-$pkgver
+  cd ${srcdir}/postgresql-${pkgver}
   patch -p1 -i ${srcdir}/postgresql-9.4.1-mingw-link.patch
-  patch -p1 -i ${srcdir}/postgresql-9.4.1-pl-perl.patch
-  patch -p1 -i ${srcdir}/postgresql-9.4.1-pl-python.patch
+  patch -p1 -i ${srcdir}/postgresql-9.5.1-pl-perl.patch
+  patch -p1 -i ${srcdir}/postgresql-9.5.1-pl-python.patch
   patch -p1 -i ${srcdir}/postgresql-9.4.1-pl-tcl.patch
   #patch -p1 -i ${srcdir}/postgresql-9.4.1-mingw-enable-readline.patch
-  
+
   autoreconf -fiv
 }
 
 build() {
+  [[ -d "${srcdir}/build-${CARCH}" ]] && rm -rf "${srcdir}/build-${CARCH}"
   mkdir -p "${srcdir}/build-${CARCH}" && cd "${srcdir}/build-${CARCH}"
   export PYTHON=${MINGW_PREFIX}/bin/python2
-  ../postgresql-$pkgver/configure \
+  ../postgresql-${pkgver}/configure \
     --build=${MINGW_CHOST} \
     --host=${MINGW_CHOST} \
     --target=${MINGW_CHOST} \
@@ -69,10 +71,10 @@ build() {
     #--with-libedit-preferred
 
   # Make DLL definition file visible during each arch build
-  ln -s "${srcdir}/postgresql-$pkgver/src/interfaces/libpq/libpqdll.def" src/interfaces/libpq/
-  ln -s "${srcdir}/postgresql-$pkgver/src/interfaces/ecpg/ecpglib/libecpgdll.def" src/interfaces/ecpg/ecpglib/
-  ln -s "${srcdir}/postgresql-$pkgver/src/interfaces/ecpg/pgtypeslib/libpgtypesdll.def" src/interfaces/ecpg/pgtypeslib/
-  ln -s "${srcdir}/postgresql-$pkgver/src/interfaces/ecpg/compatlib/libecpg_compatdll.def" src/interfaces/ecpg/compatlib/
+  ln -s "${srcdir}/postgresql-${pkgver}/src/interfaces/libpq/libpqdll.def" src/interfaces/libpq/
+  ln -s "${srcdir}/postgresql-${pkgver}/src/interfaces/ecpg/ecpglib/libecpgdll.def" src/interfaces/ecpg/ecpglib/
+  ln -s "${srcdir}/postgresql-${pkgver}/src/interfaces/ecpg/pgtypeslib/libpgtypesdll.def" src/interfaces/ecpg/pgtypeslib/
+  ln -s "${srcdir}/postgresql-${pkgver}/src/interfaces/ecpg/compatlib/libecpg_compatdll.def" src/interfaces/ecpg/compatlib/
 
   #for dir in src/interfaces src/bin/pg_config src/bin/psql src/bin/pg_dump; do
   #  make -C ${dir}
@@ -100,7 +102,7 @@ package() {
   #done
 
   # these headers are needed by the not-so-public headers of the interfaces
-  mkdir -p "${pkgdir}${MINGW_PREFIX}"/include/{libpq,postgresql/internal/libpq}  
+  mkdir -p "${pkgdir}${MINGW_PREFIX}"/include/{libpq,postgresql/internal/libpq}
   install -m644 ${srcdir}/postgresql-${pkgver}/src/include/c.h "${pkgdir}${MINGW_PREFIX}/include/postgresql/internal/"
   install -m644 ${srcdir}/postgresql-${pkgver}/src/include/port.h "${pkgdir}${MINGW_PREFIX}/include/postgresql/internal/"
   install -m644 ${srcdir}/postgresql-${pkgver}/src/include/postgres_fe.h "${pkgdir}${MINGW_PREFIX}/include/postgresql/internal/"
@@ -117,7 +119,7 @@ package() {
 
   # Use winpty-git script to invoke utilities. Please don't move this into a patch as
   # hopefully one day we won't need this hack.
-  for f in clusterdb createdb createlang createuser dropdb droplang dropuser initdb pg_basebackup pg_dump pg_dumpall pg_receivexlog pg_restore psql reindexdb vacuumdb; do
+  for f in clusterdb createdb createuser dropdb dropuser initdb pg_basebackup pg_dump pg_dumpall pg_receivewal pg_restore psql reindexdb vacuumdb; do
     mv "${pkgdir}"${MINGW_PREFIX}/bin/${f}.exe "${pkgdir}"${MINGW_PREFIX}/bin/${f}_exe
     _exename="${f}"
     echo "#!/usr/bin/env bash" > "${pkgdir}${MINGW_PREFIX}/bin/${_exename}"

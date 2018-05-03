@@ -1,11 +1,24 @@
---- ./Makefile.am.orig	2014-12-06 13:45:36.146090200 +0100
-+++ ./Makefile.am	2014-12-06 13:46:11.013246100 +0100
-@@ -8,7 +8,7 @@
- makeflags_1 =
- AM_MAKEFLAGS = $(makeflags_$(V))
+--- ./doc/Makefile.am.orig	2015-03-28 11:22:54.627520700 +0100
++++ ./doc/Makefile.am	2015-03-28 11:23:10.053773500 +0100
+@@ -1,21 +1,4 @@
+ SUBDIRS = reference
  
--SUBDIRS = . po spice libphodav doc
-+SUBDIRS = . po spice libphodav
- lib_LTLIBRARIES = libphodav-1.0.la
- bin_PROGRAMS = chezdav
- sbin_PROGRAMS = spice-webdavd
+-MAN1_TXT = chezdav.txt
+-
+-if HAVE_DOCTOOLS
+-# Manual pages are generated from .txt via Docbook
+-man1_MANS = ${MAN1_TXT:%.txt=%.1}
+-
+-SUFFIXES = .txt .xml .1
+-
+-.xml.1:
+-	$(XMLTO) man $< 2>&1
+-
+-.txt.xml:
+-	$(ASCIIDOC) --backend=docbook --doctype=manpage -o $@ $<
+-endif
+-
+-EXTRA_DIST = $(MAN1_TXT)
+-CLEANFILES = $(man1_MANS)
+ 
+ -include $(top_srcdir)/git.mk

@@ -1,25 +1,28 @@
 # Maintainer: Andrew Leech <andrew@alelec.net>
 # Contributor: Ray Donnelly <mingw.android@gmail.com>
+# Contributor: Rocco Marco Guglielmi <guglielmir@playembedded.org>
 
 _realname=openocd
+pkgbase=mingw-w64-${_realname}-git
 pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}-git"
-provides="${MINGW_PACKAGE_PREFIX}-${_realname}"
-conflicts="${MINGW_PACKAGE_PREFIX}-${_realname}"
-pkgver=0.8.0.r268.ga9c90a0
+provides=("${MINGW_PACKAGE_PREFIX}-${_realname}")
+conflicts=("${MINGW_PACKAGE_PREFIX}-${_realname}")
+pkgver=0.10.0.rc1.r1.gc404ff5
 pkgrel=1
 pkgdesc="OpenOCD - Open On-Chip Debugger (mingw-w64)"
 arch=('any')
-url="http://openocd.sourceforge.net"
+url="http://openocd.org/"
+license=("GPLv2")
 options=('!ccache')
-# What about ftdi?
 depends=("${MINGW_PACKAGE_PREFIX}-hidapi"
          "${MINGW_PACKAGE_PREFIX}-libusb"
-         "${MINGW_PACKAGE_PREFIX}-libusb-compat")
+         "${MINGW_PACKAGE_PREFIX}-libusb-compat"
+         "${MINGW_PACKAGE_PREFIX}-libftdi")
 makedepends=("${MINGW_PACKAGE_PREFIX}-gcc"
              "pkg-config"
              "git")
-source=("${_realname}::git+http://git.code.sf.net/p/openocd/code")
-md5sums=('SKIP')
+source=("${_realname}::git+https://git.code.sf.net/p/openocd/code")
+sha256sums=('SKIP')
 
 pkgver() {
   cd "${srcdir}"/${_realname}
@@ -32,24 +35,23 @@ prepare() {
 }
 
 build() {
-  [ -d "${srcdir}"/build-${CARCH} ] && rm -rf "${srcdir}"/build-${CARCH}
+  [[ -d "${srcdir}"/build-${CARCH} ]] && rm -rf "${srcdir}"/build-${CARCH}
   mkdir -p "${srcdir}"/build-${CARCH}
   cd "${srcdir}"/build-${CARCH}
 
-  local -a myconf
-  myconf+=(--prefix=${MINGW_PREFIX}
-           --{build,host}=${MINGW_CHOST}
-           --disable-dependency-tracking
-           --disable-werror
-           --enable-dummy
-           --enable-jtag_vpi
-           --enable-remote-bitbang
-           --enable-amtjtagaccel
-           --enable-gw16012
-           --enable-parport
-           --enable-parport-giveio)
+  ../${_realname}/configure \
+      --prefix=${MINGW_PREFIX} \
+      --{build,host}=${MINGW_CHOST} \
+      --disable-dependency-tracking \
+      --disable-werror \
+      --enable-dummy \
+      --enable-jtag_vpi \
+      --enable-remote-bitbang \
+      --enable-amtjtagaccel \
+      --enable-gw16012 \
+      --enable-parport \
+      --enable-parport-giveio
 
-  ../${_realname}/configure ${myconf[@]}
   make
 }
 

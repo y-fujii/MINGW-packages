@@ -1,52 +1,66 @@
 # Maintainer: Alexey Pavlov <alexpux@gmail.com>
 
 _realname=libsoup
+pkgbase=mingw-w64-${_realname}
 pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}"
-pkgver=2.48.0
+pkgver=2.60.2
 pkgrel=1
 pkgdesc="HTTP client/server library (mingw-w64)"
 arch=(any)
-url="http://ftp.gnome.org/pub/GNOME/sources/libsoup"
+url="https://download.gnome.org/sources/libsoup"
 license=("LGPL")
-makedepends=("${MINGW_PACKAGE_PREFIX}-gcc" "${MINGW_PACKAGE_PREFIX}-pkg-config" "${MINGW_PACKAGE_PREFIX}-gobject-introspection" "intltool")
+makedepends=("${MINGW_PACKAGE_PREFIX}-gcc"
+             "${MINGW_PACKAGE_PREFIX}-gobject-introspection"
+             "${MINGW_PACKAGE_PREFIX}-pkg-config"
+             "${MINGW_PACKAGE_PREFIX}-vala"
+             "intltool")
 depends=("${MINGW_PACKAGE_PREFIX}-gcc-libs"
-        "${MINGW_PACKAGE_PREFIX}-glib2"
-        "${MINGW_PACKAGE_PREFIX}-libxml2"
-        "${MINGW_PACKAGE_PREFIX}-sqlite3"
-        "${MINGW_PACKAGE_PREFIX}-glib-networking")
+         "${MINGW_PACKAGE_PREFIX}-glib2"
+         "${MINGW_PACKAGE_PREFIX}-glib-networking"
+         "${MINGW_PACKAGE_PREFIX}-libxml2"
+         "${MINGW_PACKAGE_PREFIX}-sqlite3")
 options=('staticlibs' 'strip')
-source=("http://ftp.gnome.org/pub/gnome/sources/${_realname}/${pkgver%.*}/${_realname}-$pkgver.tar.xz"
-        0001-give-cc-to-gir-scanner.mingw.patch
-        0002-fix-keyword-conflict.patch
-        0003-fix-missing-symbol.patch)
-md5sums=('51ccb76f5262945e1f0316fdc46de567'
-         'a1ddc19ab3f73bbddda1d41a6a7de399'
-         '6b449ba6f360871f18577e6b3e90b8fe'
-         'da12af3cca187a76f5493c120c4ed79f')
+source=("https://download.gnome.org/sources/${_realname}/${pkgver:0:4}/${_realname}-${pkgver}.tar.xz"
+        0006-change-pkg-config-invocations.mingw.patch)
+sha256sums=('7263cfe18872e2e652c196f5667e514616d9c97c861dfca82a65a55f45f0da01'
+            '270c8115992d4ddce526da67bbadea49ad1710f83b7a78db128dfd433372f285')
 
 prepare() {
-  cd "$srcdir/${_realname}-$pkgver"
-  patch -p1 -i ${srcdir}/0001-give-cc-to-gir-scanner.mingw.patch
-  patch -p1 -i ${srcdir}/0002-fix-keyword-conflict.patch
-  patch -p1 -i ${srcdir}/0003-fix-missing-symbol.patch
+  cd "${srcdir}/${_realname}-${pkgver}"
+
+  patch -p1 -i ${srcdir}/0006-change-pkg-config-invocations.mingw.patch
+
   autoreconf -fi
 }
 
 build() {
-  mkdir -p "${srcdir}/build-${MINGW_CHOST}"
-  cd "${srcdir}/build-${MINGW_CHOST}"
-  "${srcdir}"/${_realname}-$pkgver/configure \
+  #CPPFLAGS+=" --save-temps"
+  [[ -d ${srcdir}/build-${MINGW_CHOST} ]] && rm -rf ${srcdir}/build-${MINGW_CHOST}
+  mkdir -p ${srcdir}/build-${MINGW_CHOST} && cd ${srcdir}/build-${MINGW_CHOST}
+
+  mkdir -p docs/reference/html
+  cp -rf ../${_realname}-${pkgver}/docs/reference/html/* docs/reference/html
+
+  # an argument passed to glib-mkenums starts with a c++ comment
+  export MSYS2_ARG_CONV_EXCL="/*"
+  ../${_realname}-${pkgver}/configure \
     --prefix=${MINGW_PREFIX} \
     --build=${MINGW_CHOST} \
     --host=${MINGW_CHOST} \
     --without-apache-httpd \
     --without-apache-module-dir \
     --with-gnome \
-    --enable-introspection
-  make
+    --without-krb5-config \
+    --enable-vala \
+    --enable-introspection \
+    --disable-silent-rules
+
+  make #-j1 V=1
 }
 
 package() {
   cd "${srcdir}/build-${MINGW_CHOST}"
-  make DESTDIR="$pkgdir" install
+  make DESTDIR="${pkgdir}" install
+
+  install -Dm644 "${srcdir}/${_realname}-${pkgver}/COPYING" "${pkgdir}${MINGW_PREFIX}/share/licenses/${_realname}/COPYING"
 }

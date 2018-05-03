@@ -1,223 +1,139 @@
 # Maintainer: Martell Malone <martellmalone@gmail.com>
 # Maintainer: Ray Donnelly <mingw.android@gmail.com>
 # Contributor: David Macek <david.macek.0@gmail.com>
+# Contributor: Mateusz Mikuła <mati865@gmail.com>
+# Contributor: Alethea Rose <alethea@alethearose.com>
 
 _realname=nodejs
+pkgbase=mingw-w64-${_realname}
 pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}"
-pkgver=0.10.35
-pkgrel=5
+pkgver=6.11.0
+pkgrel=1
 pkgdesc="Evented I/O for V8 javascript (mingw-w64)"
 arch=('any')
-url="http://nodejs.org/"
+url="https://nodejs.org/"
 license=("MIT")
-makedepends=("python2" "make" "gyp-svn")
-# If can switch to shared dependencies instead of
-# static, bundled then here is the full list. For
-# for now, reluctantly the only shared dependency
-# is OpenSSL.
-# depends=("${MINGW_PACKAGE_PREFIX}-c-ares"
-#          "${MINGW_PACKAGE_PREFIX}-http-parser"
-#          "${MINGW_PACKAGE_PREFIX}-v8"
-#          "${MINGW_PACKAGE_PREFIX}-libuv"
-#          "${MINGW_PACKAGE_PREFIX}-openssl"
-#          "${MINGW_PACKAGE_PREFIX}-zlib")
-depends=("${MINGW_PACKAGE_PREFIX}-openssl" "winpty-git")
-#options=('!emptydirs' '!strip') # 'debug')
+makedepends=("${MINGW_PACKAGE_PREFIX}-python2" 'make')
+depends=("${MINGW_PACKAGE_PREFIX}-c-ares"
+         "${MINGW_PACKAGE_PREFIX}-http-parser"
+         "${MINGW_PACKAGE_PREFIX}-icu"
+         "${MINGW_PACKAGE_PREFIX}-libuv"
+         "${MINGW_PACKAGE_PREFIX}-openssl"
+         "${MINGW_PACKAGE_PREFIX}-zlib"
+         "winpty")
+optdepends=("${MINGW_PACKAGE_PREFIX}-npm: nodejs package manager")
+options=('!emptydirs' '!strip') # 'debug')
 
-source=("http://nodejs.org/dist/v${pkgver}/node-v${pkgver}.tar.gz"
-        "0001-Win32-Update-NODE_NET_SOCKET_-READ-WRITE-macros.patch"
-        "0002-Win32-Update-NODE_COUNT_GC_PERCENTTIME-macro.patch"
-        "0003-Win32-etw-Use-INT_PTR-instead-of-INT32-in-pointer-ca.patch"
-        "0004-Win32-Determine-and-use-EXEEXT.patch"
-        "0005-Win32-gyp-If-sys.platform-is-msys-use-make-not-msvs.patch"
-        "0006-Revert-to-FHS-installation-paths-on-Windows-tests-no.patch"
-        "0007-Use-shell-wrapper-script-for-npm-on-MSYS2-MinGW-w64.patch"
-        "0008-Add-output-dir-option-to-configure-node_gyp-py.patch"
-        "0009-Define-_WIN32_WINNT_0x0600-when-node_use_perfctr.patch"
-
-        "0101-Fixing-for-python2-name.patch"
-        "0102-Mat_Sutcliffe-node_mingw64-without-MSYS-path-conversion.patch"
-        "0103-Mat_Sutcliffe-node_mingw64-MSYS-path-conversion.patch"
-        "0104-Use-system-gyp.patch"
-        "0105-Add-gyp-debug-option-to-configure.patch"
-        "0106-MinGW-w64-add-platform-wintoolset-as-msvc-or-mingw-w64-for-node-gyp.patch"
-
-        "0200-v8-3.26.33-Disable-USING_V8_SHARED-for-v8_snapshot-static-lib.patch"
-        "0201-v8-3.26.33-Include-win32-headers-h-then-undef-MemoryBarrier.patch"
-        "0203-v8-3.26.33-Use-soname_version.dll-not-so.soname_version-on-Windows.patch"
-        "0300-uv-Use-4-arg-swprintf-on-MinGW-w64.patch"
-        "0301-uv-Set-WIN32_WINNT_to_0x501_for_XP.patch")
-
-md5sums=('2c00d8cf243753996eecdc4f6e2a2d11'
-         '0f5ef2b9965f6e921f5f41a21055d170'
-         '10092533b62eb3e8cd48dcf816f222de'
-         'f7013391c658d50d4568bfce7a6f4cd8'
-         '641144b54ca953884c0d45c1706dba69'
-         '73fecf70ba4f34f6924f2fa89b8c6412'
-         '70947a3999da983c0ede82fb4cee3550'
-         '331e39ee6dd81b718026b268fee9a840'
-         '7293de8eccb4e0897de77fec4afe4518'
-         'd06f47617aa37a625f68ef72c1cdcad8'
-         'cd5870bc8911fe4113d83407257ced4c'
-         'afb4b2fb4d658f8689de33ee9c1157bf'
-         '64bcb6ddfdd7863f10a302dedbe13d85'
-         'c79481c9c5010e4bcd7b4389cf44b7f9'
-         '63013c0eeaee90e0985266fba9023a3e'
-         '6274ba9c699f62da783b6d2a0446e2ae'
-         'dd82d12b16a416470bf73b56f0684163'
-         '9828f204d7068faa656b83c738b67f5e'
-         '0be71da4648801fba9aef222919cf611'
-         '1f389190a61075b31675090fa4a60f53'
-         '389ff9955ef2b7b3414551dc7f9e34e5')
+source=("https://nodejs.org/dist/v${pkgver}/node-v${pkgver}.tar.xz"
+        '0001-Fix-python-invocation-to-python2.patch'
+        '0002-Fix-system-icu-build.patch'
+        '0003-Include-win32-headers.h-in-v8-atomicops.h.patch'
+        '0004-Define-localtime_s-for-MinGW.patch'
+        '0005-Remove-.lib-suffix-on-linked-libraries.patch'
+        '0006-Define-_WIN32_WINNT-in-node.gyp.patch'
+        '0007-Skip-sys-resource-and-unneeded-includes-in-node.cc.patch'
+        '0008-Link-with-municode-and-extern-wmain-for-Unicode.patch'
+        '0009-Remove-no_rand_screen-from-s_client-invocation.patch'
+        '0010-Fix-incorrect-test-assumptions-for-MinGW.patch'
+        '0011-detect-architecture.patch'
+        '0012-Use-shell-wrapper-script-for-npm-on-MSYS2-MinGW-w64.patch'
+        '0013-Revert-to-FHS-installation-paths-on-Windows-tests-no.patch'
+        'node')
 
 prepare() {
+  cd "${srcdir}/node-v${pkgver}"
 
-  cd ${srcdir}/node-v${pkgver}
-
-  git init
-
-  # Using perfctrs makes Vista the minimum OS. MinGW-w64's perflib.h is missing lots
-  # of stuff too, so the patches aren't enough.
-  patch -p1 -i "${srcdir}"/0001-Win32-Update-NODE_NET_SOCKET_-READ-WRITE-macros.patch
-  patch -p1 -i "${srcdir}"/0002-Win32-Update-NODE_COUNT_GC_PERCENTTIME-macro.patch
-  patch -p1 -i "${srcdir}"/0003-Win32-etw-Use-INT_PTR-instead-of-INT32-in-pointer-ca.patch
-  patch -p1 -i "${srcdir}"/0004-Win32-Determine-and-use-EXEEXT.patch
-  patch -p1 -i "${srcdir}"/0005-Win32-gyp-If-sys.platform-is-msys-use-make-not-msvs.patch
-  patch -p1 -i "${srcdir}"/0006-Revert-to-FHS-installation-paths-on-Windows-tests-no.patch
-
-  patch -p1 -i "${srcdir}"/0007-Use-shell-wrapper-script-for-npm-on-MSYS2-MinGW-w64.patch
-  patch -p1 -i "${srcdir}"/0008-Add-output-dir-option-to-configure-node_gyp-py.patch
-  patch -p1 -i "${srcdir}"/0009-Define-_WIN32_WINNT_0x0600-when-node_use_perfctr.patch
-
-  patch -p1 -i "${srcdir}"/0101-Fixing-for-python2-name.patch
-  patch -p1 -i "${srcdir}"/0102-Mat_Sutcliffe-node_mingw64-without-MSYS-path-conversion.patch
-# We don't want this patch, someone might though. May need fixing for MSYS2 anyway.
-#  patch -p1 -i "${srcdir}"/0103-Mat_Sutcliffe-node_mingw64-MSYS-path-conversion.patch
-  patch -p1 -i "${srcdir}"/0104-Use-system-gyp.patch
-  patch -p1 -i "${srcdir}"/0105-Add-gyp-debug-option-to-configure.patch
-  patch -p1 -i "${srcdir}"/0106-MinGW-w64-add-platform-wintoolset-as-msvc-or-mingw-w64-for-node-gyp.patch
-
-  pushd deps/v8
-  patch -p1 -i "${srcdir}"/0200-v8-3.26.33-Disable-USING_V8_SHARED-for-v8_snapshot-static-lib.patch
-  patch -p1 -i "${srcdir}"/0201-v8-3.26.33-Include-win32-headers-h-then-undef-MemoryBarrier.patch
-  patch -p1 -i "${srcdir}"/0203-v8-3.26.33-Use-soname_version.dll-not-so.soname_version-on-Windows.patch
-  popd
-
-  pushd deps/uv
-  patch -p1 -i "${srcdir}"/0300-uv-Use-4-arg-swprintf-on-MinGW-w64.patch
-  patch -p1 -i "${srcdir}"/0301-uv-Set-WIN32_WINNT_to_0x501_for_XP.patch
-  popd
+  patch -Np1 -i "${srcdir}/0001-Fix-python-invocation-to-python2.patch"
+  patch -Np1 -i "${srcdir}/0002-Fix-system-icu-build.patch"
+  patch -Np1 -i "${srcdir}/0003-Include-win32-headers.h-in-v8-atomicops.h.patch"
+  patch -Np1 -i "${srcdir}/0004-Define-localtime_s-for-MinGW.patch"
+  patch -Np1 -i "${srcdir}/0005-Remove-.lib-suffix-on-linked-libraries.patch"
+  patch -Np1 -i "${srcdir}/0006-Define-_WIN32_WINNT-in-node.gyp.patch"
+  patch -Np1 -i "${srcdir}/0007-Skip-sys-resource-and-unneeded-includes-in-node.cc.patch"
+  patch -Np1 -i "${srcdir}/0008-Link-with-municode-and-extern-wmain-for-Unicode.patch"
+  patch -Np1 -i "${srcdir}/0009-Remove-no_rand_screen-from-s_client-invocation.patch"
+  patch -Np1 -i "${srcdir}/0010-Fix-incorrect-test-assumptions-for-MinGW.patch"
+  patch -Np1 -i "${srcdir}/0011-detect-architecture.patch"
+  patch -Np1 -i "${srcdir}/0012-Use-shell-wrapper-script-for-npm-on-MSYS2-MinGW-w64.patch"
+  patch -Np1 -i "${srcdir}/0013-Revert-to-FHS-installation-paths-on-Windows-tests-no.patch"
 }
 
 build() {
 
   local -a extra_config
 
-  cd ${srcdir}
+  cd "${srcdir}"
+  sleep 5
 
-  [ -d ${CARCH} ] && rm -rf ${CARCH}
+  [[ -d ${CARCH} ]] && rm -rf ${CARCH}
   mv node-v${pkgver} ${CARCH}
-  pushd ${CARCH}
-
-# node.js uses a patched version of v8 3.26.33. If/when they upgrade
-# we might be able to use this:
-#    --shared-v8 \
-#    --shared-v8-includes=$(pkgconf --variable=includedir v8) \
-#    --shared-v8-libpath=$(pkgconf --variable=libdir v8) \
-#    --shared-v8-libname=v8.$(pkgconf --modversion v8) \
-
-#    --shared-cares-libpath=${MINGW_PREFIX}/lib \
-#    --shared-cares-includes=${MINGW_PREFIX}/include \
-
-#    --shared-cares \
-#    --shared-libuv \
-#    --shared-zlib \
-#    --shared-http-parser \
-
-# --output-dir= and 0004-Add-output-dir-option-to-configure-node_gyp-py.patch
-# attempts to allow using the bundled (hence static) OpenSSL. The problem is
-# that the link command line ends up being ~76k characters. This patch helps
-# but it gets us down to ~45k. To further reduce this, the build folders of
-# "Release/out.target" would be the next target.
-#  OUTDIR=$(cd ../../..; echo $PWD)
-#      --output-dir=/e/m2/t \
-#
-# --without-perfctr because MinGW-w64's perflib.h is missing a needed define
-# (PERF_COUNTERSET_MULTI_AGGREGATE) and the win32 perfcnt stuff uses __out,
-# __in, and __in_opt arg decorators.
-
-  export CC=gcc
-  export CXX=g++
-  export LINK=g++
+  cd ${CARCH}
 
   if check_option "debug" "y"; then
     extra_config+=( --debug )
   fi
 
+  local opt_cpu="x64"
+  if [ "${CARCH}" = "i686" ]; then
+    opt_cpu="x86"
+  fi
+
   ./configure \
-    --prefix=${MINGW_PREFIX} \
+    --prefix="${MINGW_PREFIX}" \
     --dest-os=win \
+    --dest-cpu=${opt_cpu} \
     --shared-openssl \
-    --shared-openssl-includes=${MINGW_PREFIX}/include \
-    --shared-openssl-libpath=${MINGW_PREFIX}/lib \
+    --shared-zlib \
+    --shared-libuv \
+    --shared-cares \
+    --with-intl=system-icu \
+    --shared-http-parser \
     --without-perfctr \
-    --gyp-debug=all \
+    --without-etw \
     "${extra_config[@]}"
 
+  ${MINGW_PREFIX}/bin/python2 tools/gyp_node.py -f make
+  touch config.gypi
   make
 }
 
-package() {
-
+check() {
   cd "${srcdir}/${CARCH}"
-  make DESTDIR="${pkgdir}" install
 
-  install -d "$pkgdir"/${MINGW_PREFIX}/share/doc/nodejs
+  # A few tests still fail due to a bug with pausing/resuming file streams
+  ${MINGW_PREFIX}/bin/python2 tools/test.py --mode=release -J \
+    cctest doctool inspector message parallel sequential tick-processor || true
+}
+
+package() {
+  cd "${srcdir}/${CARCH}"
+
+  ${MINGW_PREFIX}/bin/python2 tools/install.py install "${pkgdir}" "/${MINGW_PREFIX}"
+
+  install -d "${pkgdir}${MINGW_PREFIX}/share/doc/nodejs"
   cp -r doc/api/{*.html,assets} \
-    "$pkgdir"/${MINGW_PREFIX}/share/doc/nodejs
+    "${pkgdir}${MINGW_PREFIX}/share/doc/nodejs"
 
   install -D -m644 LICENSE \
-    "$pkgdir"/${MINGW_PREFIX}/share/licenses/nodejs/LICENSE
+    "${pkgdir}${MINGW_PREFIX}/share/licenses/nodejs/LICENSE"
 
-  cat > "${pkgdir}"${MINGW_PREFIX}/bin/node-gyp <<< '#!/bin/sh
-    (set -o igncr) 2>/dev/null && set -o igncr; # cygwin encoding fix
-
-    basedir=`dirname "$0"`
-
-    case `uname` in
-        *CYGWIN*) basedir=`cygpath -w "$basedir"`;;
-    esac
-
-    if [ -x "$basedir/node.exe" ]; then
-      "$basedir/node.exe" "$basedir/../lib/node_modules/npm/node_modules/node-gyp/bin/node-gyp.js" "$@"
-    else
-      node "$basedir/../lib/node_modules/npm/node_modules/node-gyp/bin/node-gyp.js" "$@"
-    fi'
-
-  cat > "${pkgdir}"${MINGW_PREFIX}/bin/node-gyp.cmd <<< '
-    @IF EXIST "%~dp0\node.exe" (
-      "%~dp0\node.exe" "%~dp0\..\lib\node_modules\npm\node_modules\node-gyp\bin\node-gyp.js" %*
-    ) ELSE (
-      node "%~dp0\..\lib\node_modules\npm\node_modules\node-gyp\bin\node-gyp.js" %*
-    )'
-
-  # Use winpty-git script to invoke node. Please don't move this into a patch as
-  # hopefully one day we won't need this hack.
-  mv "${pkgdir}"${MINGW_PREFIX}/bin/node.exe "${pkgdir}"${MINGW_PREFIX}/bin/node_exe
-  _exename="node"
-  echo "#!/usr/bin/env bash" > "${pkgdir}${MINGW_PREFIX}/bin/${_exename}"
-  echo '/usr/bin/winpty "$( dirname ${BASH_SOURCE[0]} )/'${_exename}'.exe" "$@"' >> "${pkgdir}${MINGW_PREFIX}/bin/${_exename}"
-  mv "${pkgdir}"${MINGW_PREFIX}/bin/node_exe "${pkgdir}"${MINGW_PREFIX}/bin/node.exe
-
-  cp "${pkgdir}${MINGW_PREFIX}/lib/node_modules/npm/bin/npm.cmd" "${pkgdir}${MINGW_PREFIX}/bin/npm.cmd"
-
-  # copy missing manpages
-  cp -R "${pkgdir}${MINGW_PREFIX}/lib/node_modules/npm/man" "${pkgdir}${MINGW_PREFIX}/share"
-
-  # It seems that some paths need fixing:
-  # npm does the right thing with these files if you install a package globally.
-  # node /mingw64/lib/node_modules/npm/bin/npm-cli.js -g install coffee-script
-  # Creates correct coffee and coffee.cmd.
-  # But it installs the packages in /mingw64/bin/node_modules instead of /mingw64/lib/node_modules.
-  # /mingw64/lib/node_modules/npm/lib/npm.js is ridden with tests for win32, so that should probably be changed someday.
+  mv -v "${pkgdir}$MINGW_PREFIX/bin/node"{.exe,_exe}
+  install -m755 "${srcdir}/node" "${pkgdir}${MINGW_PREFIX}/bin/node"
+  mv -v "${pkgdir}$MINGW_PREFIX/bin/node"{_exe,.exe}
 }
+
+sha256sums=('02ba35391edea2b294c736489af01954ce6e6c39d318f4423ae6617c69ef0a51'
+            '4d152a51fb46fe46882516de0cdd695d3e007cf6df1f7797686c7d7c1b6f865b'
+            '4b87b4dec00eb8aabb600fa89348a575efc84738c571cbebfb0f723da6df8565'
+            '5f1c899191ca438b0244764718e0ca400a1ffa71a91d5e96388df095ff624f9d'
+            'd471133db9061ca2a624de1a5465f7f9423f1a1afc54d65d43401a453eeabbc4'
+            '5046e30e513adf7024f515804b1bdbeafc980f2d7712c2737c68c042b15fab69'
+            'da0fe9cba05d3f39f9521910b2a8c34f4762c5f2426c0086917c7768d686d52b'
+            '0032722b39795cb9e243afd1fe2f3d44bc517ec0e324f18fa47a100a68cf45a8'
+            '15032f4f7eb9c54e9e5d1b7792578e540a48794c88b56c297c19be10e5439161'
+            'a72b581fd7ac676e31729e32d4789af186b4809ebc9947d2778655a54032f93f'
+            '816c25397e5b54dbccb12995c22f09716a3b00ebb236df51bcefcb59240aa922'
+            '998a1b688644d58ce8060ec84d00bd06b0b2bd2d088662ebd0fbfded3151e510'
+            'b50f94667125a5bf1c3647252a737c34453750b5d4e0a31c42334f4460531795'
+            'de0acd78eed5d1ff86387866b0d65ffd43ff201cbcb15499ff30380cbbc8eace'
+            '284251ff443506cd61530a026afb421d0084e4ad25c037bcfe3a045246d729a2')

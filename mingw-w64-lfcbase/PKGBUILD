@@ -1,0 +1,56 @@
+# Maintainer: Bjoern Lemke <lemke@lemke-it.com>
+
+_realname=lfcbase
+pkgbase=mingw-w64-${_realname}
+pkgname=("${MINGW_PACKAGE_PREFIX}-${_realname}")
+pkgver=1.11.3
+pkgrel=1
+pkgdesc="LFC C++ base classes (mingw-w64)"
+arch=('any')
+url='http://www.lemke-it.com/'
+license=('GPL3')
+
+source=("http://www.lemke-it.com/${_realname}-${pkgver}.tar.gz")
+
+sha256sums=("1586ee2abd4c98c33a30ae82445d13764e26c4b6b823906e757226dcd9183704")
+
+prepare() {
+  cd $srcdir/${_realname}-${pkgver}
+}
+
+build() {
+
+  export CXXFLAGS="-DLFCNOCURSES"
+  cd "$srcdir"/${_realname}-${pkgver}
+  [[ -d "${srcdir}"/build-${CARCH} ]] && rm -rf "${srcdir}"/build-${CARCH}
+  mkdir -p "${srcdir}"/build-${CARCH} && cd "${srcdir}"/build-${CARCH}
+  ../${_realname}-${pkgver}/configure \
+    --prefix=${MINGW_PREFIX} \
+    --build=${MINGW_CHOST} \
+    --host=${MINGW_CHOST} \
+    --target=${MINGW_CHOST} \
+    --enable-static \
+    --enable-shared
+
+  make
+
+  ${MINGW_PREFIX}/bin/gcc -shared \
+    -Wl,--out-implib,liblfcbase.dll.a \
+    -o liblfcbase-0.dll \
+    ${srcdir}/build-${CARCH}/src/*.o \
+    -lsystre -lws2_32 -lpthread -lstdc++
+}
+
+check() {
+  cd "${srcdir}"/build-${CARCH}
+  make check
+}
+
+package() {
+  cd "${srcdir}"/build-${CARCH}
+  make install DESTDIR="${pkgdir}"
+
+  mkdir -p "${pkgdir}"${MINGW_PREFIX}/{bin,lib}
+  install -m 0755 liblfcbase-0.dll "${pkgdir}${MINGW_PREFIX}/bin"
+  install -m 0644 liblfcbase.dll.a "${pkgdir}${MINGW_PREFIX}/lib"
+}

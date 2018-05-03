@@ -1,76 +1,87 @@
 # Maintainer: Alexey Pavlov <alexpux@gmail.com>
 # Contributor: Ray Donnelly <mingw.android@gmail.com>
 
+_pyname=Pygments
 _realname=pygments
-pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}"
+pkgbase=mingw-w64-python-${_realname}
 pkgname=("${MINGW_PACKAGE_PREFIX}-python2-${_realname}" "${MINGW_PACKAGE_PREFIX}-python3-${_realname}")
-pkgver=1.6
-pkgrel=4
+pkgver=2.2.0
+pkgrel=1
 pkgdesc="Python syntax highlighter (mingw-w64)"
 arch=('any')
 license=('BSD')
 url="http://pygments.org/"
 makedepends=("${MINGW_PACKAGE_PREFIX}-python2-setuptools" "${MINGW_PACKAGE_PREFIX}-python3-setuptools")
-source=(http://pypi.python.org/packages/source/P/Pygments/Pygments-$pkgver.tar.gz)
-sha256sums=('799ed4caf77516e54440806d8d9cd82a7607dfdf4e4fb643815171a4b5c921c0')
+_dtoken="71/2a/2e4e77803a8bd6408a2903340ac498cb0a2181811af7c9ec92cb70b0308a"
+source=("https://pypi.python.org/packages/${_dtoken}/${_pyname}-${pkgver}.tar.gz")
+noextract=("${_pyname}-${pkgver}.tar.gz")
+sha256sums=('dbae1046def0efb574852fab9e90209b23f556367b5a320c0bcb871c77c3e8cc')
 
-build() {
-  cd "$srcdir"
-
-  rm -rf python{2,3}-build
+prepare() {
+  # workaround for symlink issue
+  tar -xf ${_pyname}-${pkgver}.tar.gz || true
+  cp ${_pyname}-${pkgver}/scripts/debug_lexer.py ${_pyname}-${pkgver}/scripts/find_error.py
   for builddir in python{2,3}-build; do
-    cp -r Pygments-$pkgver $builddir
-    pushd $builddir
-    ${MINGW_PREFIX}/bin/${builddir%-build} setup.py build
-    popd
+    rm -rf $builddir | true
+    cp -r ${_pyname}-${pkgver} $builddir
+  done
+
+  cd python2-build
+  sed -e "s|#![ ]*/usr/bin/python$|#!/usr/bin/python2|" \
+      -e "s|#![ ]*/usr/bin/env python$|#!/usr/bin/env python2|" \
+      -e "s|#![ ]*/bin/env python$|#!/usr/bin/env python2|" \
+      -i $(find . -name '*.py')
+
+}
+
+check() {
+  for pver in {2,3}; do
+    msg "Python ${pver} test for ${CARCH}"
+    cd "${srcdir}/python${pver}-build"
+    ${MINGW_PREFIX}/bin/python${pver} setup.py check
   done
 }
 
 package_python3-pygments() {
   depends=("${MINGW_PACKAGE_PREFIX}-python3-setuptools")
 
-  pushd ${MINGW_PREFIX} > /dev/null
-  local _mingw_prefix=`pwd -W`
-  popd > /dev/null
+  local _mingw_prefix=$(cygpath -am ${MINGW_PREFIX})
 
-  cd "$srcdir/python3-build"
+  cd "${srcdir}/python3-build"
   MSYS2_ARG_CONV_EXCL="--prefix=;--install-scripts=;--install-platlib=" \
-  ${MINGW_PREFIX}/bin/python3 setup.py install --prefix=${MINGW_PREFIX} --root="$pkgdir" -O1
+  ${MINGW_PREFIX}/bin/python3 setup.py install --prefix=${MINGW_PREFIX} --root="${pkgdir}" -O1
 
-  # pygmentize has been moved to the python2-pygments package
-  #rm ${pkgdir}${MINGW_PREFIX}/bin/pygmentize.exe{,.manifest}
-  #rm -rf ${pkgdir}${MINGW_PREFIX}/bin
-
-  for f in pygmentize; do
-    mv "${pkgdir}${MINGW_PREFIX}"/bin/${f}.exe "${pkgdir}${MINGW_PREFIX}"/bin/${f}-3.4.exe
-    if [ -f "${pkgdir}${MINGW_PREFIX}"/bin/${f}.exe.manifest ]; then
-      mv "${pkgdir}${MINGW_PREFIX}"/bin/${f}.exe.manifest "${pkgdir}${MINGW_PREFIX}"/bin/${f}-3.4.exe.manifest
-      sed -e "s|${f}|${f}-3.4|g" -i "${pkgdir}${MINGW_PREFIX}"/bin/${f}-3.4.exe.manifest
-    fi
-    mv "${pkgdir}${MINGW_PREFIX}"/bin/${f}-script.py "${pkgdir}${MINGW_PREFIX}"/bin/${f}-3.4-script.py
-  done
+  install -Dm644 LICENSE "${pkgdir}${MINGW_PREFIX}/share/licenses/python3-${_realname}/LICENSE"
+  
   # fix python command in files
   for _f in "${pkgdir}${MINGW_PREFIX}"/bin/*.py; do
     sed -e "s|${_mingw_prefix}/bin/|/usr/bin/env |g" -i ${_f}
   done
-  install -Dm644 LICENSE "${pkgdir}${MINGW_PREFIX}/share/licenses/python3-${_realname}/LICENSE"
 }
 
 package_python2-pygments() {
   depends=("${MINGW_PACKAGE_PREFIX}-python2-setuptools")
 
-  pushd ${MINGW_PREFIX} > /dev/null
-  local _mingw_prefix=`pwd -W`
-  popd > /dev/null
+  local _mingw_prefix=$(cygpath -am ${MINGW_PREFIX})
 
-  cd "$srcdir/python2-build"
+  cd "${srcdir}/python2-build"
   MSYS2_ARG_CONV_EXCL="--prefix=;--install-scripts=;--install-platlib=" \
-  ${MINGW_PREFIX}/bin/python2 setup.py install --prefix=${MINGW_PREFIX} --root="$pkgdir" -O1
+  ${MINGW_PREFIX}/bin/python2 setup.py install --prefix=${MINGW_PREFIX} --root="${pkgdir}" -O1
 
   # fix python command in files
   for _f in "${pkgdir}${MINGW_PREFIX}"/bin/*.py; do
     sed -e "s|${_mingw_prefix}/bin/|/usr/bin/env |g" -i ${_f}
   done
+
+  for f in pygmentize; do
+    mv "${pkgdir}${MINGW_PREFIX}"/bin/${f}{,2}.exe
+    if [ -f "${pkgdir}${MINGW_PREFIX}"/bin/${f}.exe.manifest ]; then
+      mv "${pkgdir}${MINGW_PREFIX}"/bin/${f}{,2}.exe.manifest
+      sed -e "s|${f}|${f}2|g" -i "${pkgdir}${MINGW_PREFIX}"/bin/${f}2.exe.manifest
+    fi
+    mv "${pkgdir}${MINGW_PREFIX}"/bin/${f}{,2}-script.py
+  done
+
   install -Dm644 LICENSE "${pkgdir}${MINGW_PREFIX}/share/licenses/python2-${_realname}/LICENSE"
 }
 

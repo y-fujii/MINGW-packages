@@ -1,37 +1,34 @@
 # Maintainer: Alexey Pavlov <alexpux@gmail.com>
 
 _realname=crt
+pkgbase=mingw-w64-${_realname}-git
 pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}-git"
-replaces="${MINGW_PACKAGE_PREFIX}-${_realname}-svn"
-pkgver=5.0.0.4452.f801436
+replaces=("${MINGW_PACKAGE_PREFIX}-${_realname}-svn")
+pkgver=5.0.0.5002.34a7c1c0
 pkgrel=1
 pkgdesc='MinGW-w64 CRT for Windows'
 arch=('any')
-url='http://mingw-w64.sourceforge.net'
+url='https://mingw-w64.sourceforge.io/'
 license=('custom')
-groups=("${MINGW_PACKAGE_PREFIX}-toolchain" "${MINGW_PACKAGE_PREFIX}")
+groups=("${MINGW_PACKAGE_PREFIX}-toolchain")
 depends=("${MINGW_PACKAGE_PREFIX}-headers-git")
-makedepends=("git" "${MINGW_PACKAGE_PREFIX}-gcc" "${MINGW_PACKAGE_PREFIX}-binutils")
+makedepends=("git"
+             "${MINGW_PACKAGE_PREFIX}-gcc"
+             "${MINGW_PACKAGE_PREFIX}-binutils")
 provides=("${MINGW_PACKAGE_PREFIX}-${_realname}")
 conflicts=("${MINGW_PACKAGE_PREFIX}-${_realname}")
 options=('!strip' 'staticlibs' '!buildflags' '!emptydirs')
-source=("${_realname}"::"git://git.code.sf.net/p/mingw-w64/mingw-w64"
-        "0001-d3d11-Add-prototype-for-CreateDeviceAndSwapChain.patch"
-        "0002-dxgi-Add-interface-for-IDXGISurface1.patch"
-        "0003-dxgi-Add-missing-dxgi-1.2-structs-and-interfaces.patch"
-        "0004-d3d11-Add-missing-d3d11-1.1-structs-and-interfaces.patch"
-        "0005-Add-missing-DirectX11-enum.patch"
-        "0006-d3d11_32.patch")
-md5sums=('SKIP'
-         '0bcf1726f2093c6ed7e998d7e6c9dd16'
-         '20172a91981ffa87aa6aa5d3001c290b'
-         '410ff7ad4443a9f2e318c64742b2d358'
-         '28a4074ee6fcf76b5b13db2a8cd3291c'
-         '652859ad478448a70c2074a854a313ec'
-         '8cc67bab94acc6b1c23a6130bc80fbdb')
+source=("mingw-w64"::"git+https://git.code.sf.net/p/mingw-w64/mingw-w64"
+        0001-Allow-to-use-bessel-and-complex-functions-without-un.patch
+        0002-DirectX-9-fixes-for-VLC.patch
+        0003-DirectX-11-fixes-for-VLC.patch)
+sha256sums=('SKIP'
+            'd641257f7e1469aff89adc33e57702b75fe9667ca035978f890eae1020b6814c'
+            '7ec97c9c02827aedc8c922784cb998e1175769bf0c8f7bd18a79d64002620330'
+            'e80b76aa3eef6d0206c4d99ac340a60cfd92ea80392a6ec5122dc3851fbd3286')
 
 pkgver() {
-  cd "$srcdir/${_realname}"
+  cd "${srcdir}/mingw-w64"
   local _major=$(head -n 16 mingw-w64-headers/crt/_mingw_mac.h | grep '__MINGW64_VERSION_MAJOR' | sed -e 's/.* //' | tr '\n' '.' | sed 's/.$/\n/')
   local _minor=$(head -n 16 mingw-w64-headers/crt/_mingw_mac.h | grep '__MINGW64_VERSION_MINOR' | sed -e 's/.* //' | tr '\n' '.' | sed 's/.$/\n/')
   local _rev=0
@@ -39,13 +36,11 @@ pkgver() {
 }
 
 prepare() {
-  cd ${srcdir}/${_realname}
-  git am "${srcdir}/"0001-d3d11-Add-prototype-for-CreateDeviceAndSwapChain.patch
-  git am "${srcdir}/"0002-dxgi-Add-interface-for-IDXGISurface1.patch
-  git am "${srcdir}/"0003-dxgi-Add-missing-dxgi-1.2-structs-and-interfaces.patch
-  git am "${srcdir}/"0004-d3d11-Add-missing-d3d11-1.1-structs-and-interfaces.patch
-  git am "${srcdir}/"0005-Add-missing-DirectX11-enum.patch
-  git am "${srcdir}/"0006-d3d11_32.patch
+  cd ${srcdir}/mingw-w64
+
+  git am --committer-date-is-author-date "${srcdir}/0001-Allow-to-use-bessel-and-complex-functions-without-un.patch"
+  git am --committer-date-is-author-date "${srcdir}/0002-DirectX-9-fixes-for-VLC.patch"
+  git am --committer-date-is-author-date "${srcdir}/0003-DirectX-11-fixes-for-VLC.patch"
 }
 
 build() {
@@ -59,8 +54,9 @@ build() {
     ;;
   esac
 
+  [[ -d ${srcdir}/crt-${MINGW_CHOST} ]] && rm -rf ${srcdir}/crt-${MINGW_CHOST}
   mkdir -p ${srcdir}/crt-${MINGW_CHOST} && cd ${srcdir}/crt-${MINGW_CHOST}
-  ${srcdir}/${_realname}/mingw-w64-crt/configure \
+  ${srcdir}/mingw-w64/mingw-w64-crt/configure \
     --prefix=${MINGW_PREFIX}/${MINGW_CHOST} \
     --build=${MINGW_CHOST} \
     --host=${MINGW_CHOST} \

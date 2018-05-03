@@ -2,28 +2,30 @@
 # Maintainer (ArchLinux): Andrea Scarpino <andrea@archlinux.org>
 # Maintainer (MSYS2): Ray Donnelly <mingw.android@gmail.com>
 
-_variant=-static
-#_variant=-shared
+_variant=-${KF5_VARIANT:-shared}
 source "$(dirname ${BASH_SOURCE[0]})"/../mingw-w64-PKGBUILD-common/kde-frameworks5
 _kde_f5_init_package "${_variant}" "kcoreaddons"
-pkgver=5.5.0
+pkgver=5.38.0
 pkgrel=1
 arch=('any')
-url=('https://projects.kde.org/projects/frameworks/${_basename}')
 pkgdesc="Classes built on top of QtCore to perform various tasks (mingw-w64-qt5${_namesuff})"
 license=('LGPL')
-makedepends=("${MINGW_PACKAGE_PREFIX}-extra-cmake-modules")
+makedepends=("${MINGW_PACKAGE_PREFIX}-extra-cmake-modules>=${pkgver}")
 depends=()
 _kde_f5_add_depends "${_variant}" "${MINGW_PACKAGE_PREFIX}-qt5${_namesuff}" "${MINGW_PACKAGE_PREFIX}-bzip2"
 groups=('kf5')
-source=("http://download.kde.org/stable/frameworks/${pkgver%.*}/${_basename}-${pkgver}.tar.xz")
-md5sums=('b1933db1246ccf28654c4eea2d399381')
+source=("https://download.kde.org/stable/frameworks/${pkgver%.*}/${_basename}-${pkgver}.tar.xz"
+        001-disable-fam-on-windows.patch)
+sha256sums=('9be3dd86402e173da025c0d326fd9a38ffeecb34828a287f8b8c530a5db275d4'
+            'cce04ffc4ddc00bbc47625ce2979c2c4011822ae3804561e822be26a8eed8175')
 
 prepare() {
-  mkdir -p build-${CARCH}${_variant}
+  cd ${_basename}-${pkgver}
+  patch -p1 -i ${srcdir}/001-disable-fam-on-windows.patch
 }
 
 build() {
+  mkdir -p build-${CARCH}${_variant}
   local -a extra_config
   cd build-${CARCH}${_variant}
   if [ "${_variant}" = "-static" ]; then
@@ -34,16 +36,16 @@ build() {
     QT5_PREFIX=${MINGW_PREFIX}
   fi
 
-  cmake ../${_basename}-${pkgver} \
-    -DCMAKE_BUILD_TYPE=Release \
-    -DCMAKE_INSTALL_PREFIX=${QT5_PREFIX} \
-    -DLIB_INSTALL_DIR=lib \
-    -DECM_MKSPECS_INSTALL_DIR=${QT5_PREFIX} \
-    -DQt5_DIR=${QT5_PREFIX}/lib/cmake/Qt5 \
-    -DBUILD_TESTING=OFF \
-    -DECM_DIR=${MINGW_PREFIX}/share/ECM \
-    "${extra_config[@]}" \
-    -G'MSYS Makefiles' --debug-output
+  MSYS2_ARG_CONV_EXCL="-DCMAKE_INSTALL_PREFIX=;-DECM_MKSPECS_INSTALL_DIR=" \
+    cmake ../${_basename}-${pkgver} \
+      -DCMAKE_BUILD_TYPE=$(_kde_f5_CMAKE_BUILD_TYPE) \
+      -DCMAKE_INSTALL_PREFIX=${QT5_PREFIX} \
+      -DKDE_INSTALL_LIBDIR=lib \
+      -DECM_MKSPECS_INSTALL_DIR=${QT5_PREFIX}/share/qt5/mkspecs \
+      -DBUILD_TESTING=OFF \
+      -DECM_DIR=${MINGW_PREFIX}/share/ECM \
+      "${extra_config[@]}" \
+      -G'MSYS Makefiles'
   make
 }
 

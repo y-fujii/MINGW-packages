@@ -1,13 +1,14 @@
 # Maintainer: Alexey Pavlov <alexpux@gmail.com>
 
 _realname=collada-dom
+pkgbase=mingw-w64-${_realname}-svn
 pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}-svn"
 _base_ver=2.4.1
 pkgver=2.4.1.r889
-pkgrel=3
+pkgrel=6
 pkgdesc="API that provides a C++ object representation of a COLLADA XML instance document (mingw-w64)"
 arch=('any')
-url="http://sourceforge.net/projects/collada-dom/"
+url="https://sourceforge.net/projects/collada-dom/"
 license=("LGPL")
 makedepends=("${MINGW_PACKAGE_PREFIX}-gcc" "${MINGW_PACKAGE_PREFIX}-pkg-config" "${MINGW_PACKAGE_PREFIX}-cmake" "subversion")
 depends=("${MINGW_PACKAGE_PREFIX}-bzip2"
@@ -18,15 +19,17 @@ depends=("${MINGW_PACKAGE_PREFIX}-bzip2"
 provides=("${MINGW_PACKAGE_PREFIX}-${_realname}")
 conflicts=("${MINGW_PACKAGE_PREFIX}-${_realname}")
 options=('staticlibs' 'strip' 'buildflags')
-source=("${_realname}"::"svn+svn://svn.code.sf.net/p/collada-dom/code/trunk"
+source=("${_realname}"::"svn+https://svn.code.sf.net/p/collada-dom/code/trunk#revision=889"
         001-collada-2.4.0-mingw-w64-fix.patch
-        002-fix-pkg-config.patch)
-md5sums=('SKIP'
-         'b500fff9e44b0e556f847838e5644592'
-         '538a75efbdcf1344103176e4a8c41fc6')
+        002-fix-pkg-config.patch
+        003-fix-warnings.patch)
+sha256sums=('SKIP'
+            'a415b4615c46317683d4eade3c650e39fcfcfb2f2484293ba8a1e4173a53f29a'
+            '543376c86d137c45c41f1c659f4b86ff9f73824ece606a20a44915ae9fe18ecb'
+            '1d9548f849e17a60fa6de60c1b2872ca5e80ea6c8695cb6fae47418b48a09e46')
 
 pkgver() {
-  cd "$srcdir/${_realname}"
+  cd "${srcdir}/${_realname}"
   local ver="$(svnversion)"
   printf "%s.r%s" "${_base_ver}" "${ver//[[:alpha:]]}"
 }
@@ -35,6 +38,7 @@ prepare() {
   cd "${srcdir}/${_realname}"
   patch -p1 -i ${srcdir}/001-collada-2.4.0-mingw-w64-fix.patch
   patch -p1 -i ${srcdir}/002-fix-pkg-config.patch
+  patch -p1 -i ${srcdir}/003-fix-warnings.patch
 
   #sed -i "s|#include <unzip.h>|#include <minizip/unzip.h>|g" dom/include/dae/daeZAEUncompressHandler.h
 }
@@ -45,11 +49,13 @@ build() {
   CPPFLAGS+="  -I ${MINGW_PREFIX}/include/minizip"
 
   cd "${srcdir}/build-${MINGW_CHOST}"
+
+  MSYS2_ARG_CONV_EXCL="-DCMAKE_INSTALL_PREFIX=" \
   ${MINGW_PREFIX}/bin/cmake.exe \
     -G"MSYS Makefiles" \
-    -DCMAKE_INSTALL_PREFIX:PATH=${pkgdir}${MINGW_PREFIX} \
-    -DOPT_COLLADA14:BOOL=ON \
-    -DOPT_COLLADA15:BOOL=ON \
+    -DCMAKE_INSTALL_PREFIX=${MINGW_PREFIX} \
+    -DOPT_COLLADA14=ON \
+    -DOPT_COLLADA15L=ON \
     -DCMAKE_BUILD_TYPE=RELEASE \
     -DBOOST_ROOT=${MINGW_PREFIX} \
     ../${_realname}
@@ -58,7 +64,7 @@ build() {
 
 package() {
   cd "${srcdir}/build-${MINGW_CHOST}"
-  make -j1 install
+  make DESTDIR=${pkgdir} -j1 install
   #cp dom/src/1.4/*.a ${pkgdir}${MINGW_PREFIX}/lib/
   #mv ${pkgdir}${MINGW_PREFIX}/lib/cmake/collada_dom-2.4/collada_dom-config.cmake ${pkgdir}${MINGW_PREFIX}/lib/cmake/collada_dom-2.4/collada_dom14-config.cmake
 
@@ -70,13 +76,4 @@ package() {
   mkdir -p ${pkgdir}${MINGW_PREFIX}/bin
   mv ${pkgdir}${MINGW_PREFIX}/lib/*.dll ${pkgdir}${MINGW_PREFIX}/bin/
   #rm ${pkgdir}${MINGW_PREFIX}/lib/pkgconfig/collada-dom.pc
-
-  mkdir -p ${pkgdir}${MINGW_PREFIX}
-  pushd ${pkgdir}${MINGW_PREFIX} > /dev/null
-  export PREFIX_WIN=`pwd -W`
-  popd > /dev/null
-  sed -s "s|${PREFIX_WIN}|${MINGW_PREFIX}|g" \
-    -i ${pkgdir}${MINGW_PREFIX}/lib/pkgconfig/collada-dom.pc \
-    -i ${pkgdir}${MINGW_PREFIX}/lib/pkgconfig/collada-dom-141.pc \
-    -i ${pkgdir}${MINGW_PREFIX}/lib/pkgconfig/collada-dom-150.pc
 }

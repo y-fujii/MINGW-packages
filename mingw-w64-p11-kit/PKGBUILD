@@ -3,57 +3,55 @@
 # Contributor: Ray Donnelly <mingw.android@gmail.com>
 
 _realname=p11-kit
+pkgbase=mingw-w64-${_realname}
 pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}"
-pkgver=0.22.1
+pkgver=0.23.9
 pkgrel=1
 pkgdesc="Library to work with PKCS#11 modules"
 arch=('any')
-url="http://p11-glue.freedesktop.org"
+url="https://p11-glue.freedesktop.org/p11-kit.html"
 license=('BSD')
 depends=("${MINGW_PACKAGE_PREFIX}-libtasn1"
          "${MINGW_PACKAGE_PREFIX}-libffi"
          "${MINGW_PACKAGE_PREFIX}-gettext")
 makedepends=("${MINGW_PACKAGE_PREFIX}-gcc"
              "${MINGW_PACKAGE_PREFIX}-pkg-config"
-             "gtk-doc")
+             "${MINGW_PACKAGE_PREFIX}-gtk-doc")
 options=('!debug' 'strip' 'staticlibs')
-source=($url/releases/$_realname-$pkgver.tar.gz{,.sig}
-        0000-no-proxy.mingw.patch
+source=(https://github.com/p11-glue/p11-kit/releases/download/${pkgver}/${_realname}-${pkgver}.tar.gz
         0001-allow-gtkdocize.all.patch
         0002-fix-includes.patch
-        0003-fix-test-path.all.patch
         0004-fix-abspath-check.all.patch
         0006-p11-kit-relocation.patch
         0007-mmap-CreateFile-with-FILE_SHARE_READ.patch
         0008-add-debugging-to-mmap.patch
         0009-add-debugging-to-path.patch
-        0010-fix-transport-test.patch)
-md5sums=('4e9bea1106628ffb820bdad24a819fac'
-         'SKIP'
-         '70330b415eb5167e5a530c13bb96c212'
-         'b7a706e19b5e29d96889ca2410a151df'
-         'e5c7e6d8a83cd6d5809f5be8725dbe73'
-         '30c965a6c7f92d1f9d88c92a7840f052'
-         '9a91b743f18126ff7d4d08e43c38d0a3'
-         'e7d5989b75a5520054f497754398c2ba'
-         '3a37950e2a7ab95a4e691c02ff0603ab'
-         '0dcd0d7e10d5d898f32da8866580d640'
-         '27793fc62cf1fbfe52964ba8099d2b44'
-         '8ecfeb942a3de9cb7355519c0eb62f79')
+        0010-fix-transport-test.patch
+        0011-p11-kit-spawn-external.patch)
+validpgpkeys=('C0F67099B808FB063E2C81117BFB1108D92765AF')
+sha256sums=('e1c1649c335107a8d33cf3762eb7f57b2d0681f0c7d8353627293a58d6b4db63'
+            '195b2e8695f701caf545e2a468383ad29457febd9b1ee57de1986de04ad3c31c'
+            'aa92f986d3f7dfc119e86f9a8f3987e6ac2562149921820eadbe09218c4df99c'
+            'ea4593324db6d2d193733561f0352c6d679d1fb00aed0a2bae0d28aecbe92721'
+            '5027aa135acd990eb24975d0e4743fbb8b5f823573f6d98a3354e2b7d9420236'
+            '2b0fc5c54776aca54e306315338323075e7412d8d800f490a31870008c34f8d1'
+            '652e4be637bf77f20d8fde91175286701430e720e4082e8818a50ebddff28460'
+            '8c796ade0ef6356c796d2e87b967c7a9d888783c08e740e35d5686f6deb7f009'
+            '9aae8454b11270c39dba924731fd5555e3a1b97cd4dd6fd61566c737b1adde72'
+            'd5e804ba795aefe0a3938bc527b0e6c8ff8c1d5dfa1c0c1728c20a249504af6b')
 
 prepare() {
   cd "${srcdir}"/${_realname}-${pkgver}
   rm -f common/pathtools.c common/pathtools.h > /dev/null 2>&1 || true
-  patch -p1 -i ${srcdir}/0000-no-proxy.mingw.patch
   patch -p1 -i ${srcdir}/0001-allow-gtkdocize.all.patch
   patch -p1 -i ${srcdir}/0002-fix-includes.patch
-  patch -p1 -i ${srcdir}/0003-fix-test-path.all.patch
   patch -p1 -i ${srcdir}/0004-fix-abspath-check.all.patch
   patch -p1 -i ${srcdir}/0006-p11-kit-relocation.patch
   patch -p1 -i ${srcdir}/0007-mmap-CreateFile-with-FILE_SHARE_READ.patch
   # patch -p1 -i ${srcdir}/0007-add-debugging-to-mmap.patch
   # patch -p1 -i ${srcdir}/0008-add-debugging-to-path.patch
   patch -p1 -i ${srcdir}/0010-fix-transport-test.patch
+  patch -p1 -i ${srcdir}/0011-p11-kit-spawn-external.patch
 
   autoreconf -vfi
   gtkdocize
@@ -68,9 +66,12 @@ build() {
     extra_config+=( --enable-debug=no )
   fi
 
+  [[ -d ${srcdir}/build-${MINGW_CHOST} ]] && rm -rf ${srcdir}/build-${MINGW_CHOST}
   mkdir -p "${srcdir}/build-${MINGW_CHOST}"
   cd "${srcdir}/build-${MINGW_CHOST}"
-  "${srcdir}"/${_realname}-${pkgver}/configure \
+
+  PKG_CONFIG_PATH="${PKG_CONFIG_PATH}:/usr/share/pkgconfig" \
+  ../${_realname}-${pkgver}/configure \
     --prefix=${MINGW_PREFIX} \
     --build=${MINGW_CHOST} \
     --host=${MINGW_CHOST} \
@@ -88,5 +89,5 @@ build() {
 package() {
   cd "${srcdir}/build-${MINGW_CHOST}"
   MSYS2_ARG_CONV_EXCL="-DBINDIR=;-DDATA_DIR=;-DP11_SYSTEM_CONFIG_FILE=;-DP11_SYSTEM_CONFIG_MODULES=;-DP11_PACKAGE_CONFIG_MODULES=;-DP11_MODULE_PATH=;-DDATADIR=;-DSYSCONFDIR=;-DPRIVATEDIR=;-DP11_USER_CONFIG_FILE=;-DP11_USER_CONFIG_MODULES=" \
-    make DESTDIR="$pkgdir" install
+    make DESTDIR="${pkgdir}" install
 }

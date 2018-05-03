@@ -1,7 +1,7 @@
-diff -urN a/setup.py b/setup.py
---- a/setup.py	2014-10-11 14:22:12.606318500 +0100
-+++ b/setup.py	2014-10-11 14:22:15.132463000 +0100
-@@ -456,10 +456,10 @@
+diff -Naur Python-3.5.2-orig/setup.py Python-3.5.2/setup.py
+--- Python-3.5.2-orig/setup.py	2016-07-12 14:22:13.404800700 +0300
++++ Python-3.5.2/setup.py	2016-07-12 14:22:15.531300700 +0300
+@@ -497,10 +497,10 @@
          if not cross_compiling:
              add_dir_to_list(self.compiler.library_dirs, '/usr/local/lib')
              add_dir_to_list(self.compiler.include_dirs, '/usr/local/include')

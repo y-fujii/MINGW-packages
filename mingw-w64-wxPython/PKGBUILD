@@ -1,28 +1,28 @@
 # Maintainer: Alexey Pavlov <alexpux@gmail.com>
 
 _realname=wxPython
+pkgbase=mingw-w64-${_realname}
 pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}"
 pkgver=3.0.2.0
 _editraver=0.7.20
-pkgrel=1
+pkgrel=6
 pkgdesc="A wxWidgets GUI toolkit for Python (mingw-w64)"
 arch=('any')
 license=("custom:wxWindows")
-groups=("${MINGW_PACKAGE_PREFIX}")
-url="http://www.wxpython.org/"
+url="https://www.wxpython.org/"
 depends=("${MINGW_PACKAGE_PREFIX}-python2"
-        "${MINGW_PACKAGE_PREFIX}-wxWidgets")
+         "${MINGW_PACKAGE_PREFIX}-wxWidgets")
 makedepends=("${MINGW_PACKAGE_PREFIX}-gcc")
 options=('strip' 'staticlibs' 'buildflags')
-source=(http://downloads.sourceforge.net/wxpython/${_realname}-src-${pkgver}.tar.bz2
-        #http://editra.googlecode.com/files/Editra-${_editraver}.tar.gz
+source=(https://downloads.sourceforge.net/wxpython/${_realname}-src-${pkgver}.tar.bz2
+        #https://editra.googlecode.com/files/Editra-${_editraver}.tar.gz
         001-mingw-python.patch
         002-system-includes.patch
         003-fix-cast-error.patch)
-sha1sums=('5053f3fa04f4eb3a9d4bfd762d963deb7fa46866'
-          'b189dac25d4354ba3cca93e6108fb279dea0e2b7'
-          'fb96353201fb0b529a71e70710986246b2978e94'
-          '9fa4ac1988fec999feca090f8a8360807664f987')
+sha256sums=('d54129e5fbea4fb8091c87b2980760b72c22a386cb3b9dd2eebc928ef5e8df61'
+            '61ca97f814b85b1274e751c694f9e3adc31ce1e22c56c9ca9c59e0337a36fef5'
+            'bea571dfdade2c7b15e1feaf260834d571f49c36101a420104b933c3597f7ebf'
+            'd7c4de5594149d2bba4a0ceb95d6a6a0c3c0e43ab9e876dce22440ccaad3b5f0')
 
 prepare() {
   cd "${srcdir}/${_realname}-src-${pkgver}"
@@ -58,7 +58,7 @@ build() {
     --disable-precomp-headers
 
   cd wxPython
-  MSYS2_ARG_CONV_EXCL="--prefix=;--install-scripts=;--install-platlib=" \
+  MSYS2_ARG_CONV_EXCL="--prefix=;--install-scripts=;--install-platlib=;--install-headers=;-install-data=" \
   ${MINGW_PREFIX}/bin/python2 setup.py WXPORT=msw BUILD_ACTIVEX=0 UNICODE=1 COMPILER=mingw32 build
   #make VERBOSE=1
 }
@@ -67,13 +67,11 @@ package() {
   cd "${srcdir}/wxPython-src-${pkgver}/wxPython"
   MSYS2_ARG_CONV_EXCL="--prefix=;--install-scripts=;--install-platlib=;--install-headers=;-install-data=" \
   ${MINGW_PREFIX}/bin/python2 setup.py NO_HEADERS=0 WXPORT=msw BUILD_ACTIVEX=0 UNICODE=1 COMPILER=mingw32 \
-    install --prefix=${MINGW_PREFIX} --root="$pkgdir"
+    install --prefix=${MINGW_PREFIX} --root="${pkgdir}"
 
   install -D -m644 ../docs/licence.txt "${pkgdir}${MINGW_PREFIX}/share/licenses/${_realname}/LICENSE"
 
-  pushd ${MINGW_PREFIX} > /dev/null
-  local _dir=`pwd -W`
-  popd > /dev/null
+  local _dir=$(cygpath -am ${MINGW_PREFIX})
   for _f in ${pkgdir}${MINGW_PREFIX}/bin/*; do
     sed -e "s|${_dir}|${MINGW_PREFIX}|g" -i ${_f}
   done

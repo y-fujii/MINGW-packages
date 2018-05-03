@@ -1,62 +1,81 @@
 # Maintainer: Alexey Pavlov <alexpux@gmail.com>
 
 _realname=libxslt
-
+pkgbase=mingw-w64-${_realname}
 pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}"
-pkgver=1.1.28
-pkgrel=4
+pkgver=1.1.32
+pkgrel=1
 pkgdesc="XML stylesheet transformation library (mingw-w64)"
 arch=('any')
 url="http://xmlsoft.org/XSLT/"
 license=('custom')
-depends=("${MINGW_PACKAGE_PREFIX}-gcc-libs" "${MINGW_PACKAGE_PREFIX}-libxml2" "${MINGW_PACKAGE_PREFIX}-libgcrypt")
-groups=("${MINGW_PACKAGE_PREFIX}")
-makedepends=("${MINGW_PACKAGE_PREFIX}-gcc" "${MINGW_PACKAGE_PREFIX}-pkg-config")
+depends=("${MINGW_PACKAGE_PREFIX}-gcc-libs"
+         "${MINGW_PACKAGE_PREFIX}-libxml2"
+         "${MINGW_PACKAGE_PREFIX}-libgcrypt")
+makedepends=("${MINGW_PACKAGE_PREFIX}-gcc"
+             "${MINGW_PACKAGE_PREFIX}-python2"
+             "${MINGW_PACKAGE_PREFIX}-pkg-config")
 options=('strip' 'staticlibs')
 install=${_realname}-${CARCH}.install
-source=("http://xmlsoft.org/sources/libxslt-${pkgver}.tar.gz"
-    "libxslt-1.1.26-w64.patch"
-    "libxslt-1.1.27-disable_static_modules.patch"
-    "libxslt-1.1.28-win32-shared.patch"
-    "libxslt.m4-libxslt-1.1.26.patch"
-    '0002-python-linking-on.mingw.patch'
-    '0003-fix-concurrent-directory-creation.all.patch'
-    '0004-add-missing-include-for-python.all.patch'
-    '0005-fix-freelocales-export.all.patch'
-    '0006-no-undefined-tests.patch'
-    '0007-use-mingw-C99-compatible-functions-{v}snprintf.patch')
-md5sums=('9667bf6f9310b957254fdcf6596600b7'
-         'b994c0d9df0f644e219cf63561ee0d4e'
-         '05498030f492ffb0774869bacafe5fc1'
-         '19646f155b518b40cb63e41270215964'
-         '61b520bbd42006c16bbfc85bc5342b96'
-         'a944fcf65f9948bb9dba325a8f6e7c5c'
-         'cf3c1fb253a4a3bdeb099a0f6c55220a'
-         '267c16ba85010d47a86827da1f339bdd'
-         'ee6e3e375b8ea2f42c7039e13f14f0c8'
-         '5723b8cad2aafb5a72ff97d342870f75'
-         '4fc5c9dc73cb6e4d8d35e58c0d447f2a')
+source=("http://xmlsoft.org/sources/${_realname}-${pkgver}.tar.gz"
+        "libxslt-1.1.32-w64.patch"
+        "libxslt-1.1.27-disable_static_modules.patch"
+        "libxslt-1.1.32-win32-shared.patch"
+        "libxslt.m4-libxslt-1.1.26.patch"
+        '0002-python-linking-on.mingw.patch'
+        '0003-fix-concurrent-directory-creation.all.patch'
+        '0004-add-missing-include-for-python.all.patch'
+        '0007-use-mingw-C99-compatible-functions-{v}snprintf.patch'
+        '0008-fix-warnings.patch')
+sha256sums=('526ecd0abaf4a7789041622c3950c0e7f2c4c8835471515fd77eec684a355460'
+            'bd5aefa6807a4dfeb293328acea8a76d52284cf115f9f354af6a36785eb1ce91'
+            'e62f27315f2a25db3b6bfe5695d885998aeb3ad87cce6aebbd035c404fe8d378'
+            '76029b76c6a1670f85ecb3db6b299cfe468a65b1718880cb8b82c6813cc63ea9'
+            'c02cd8437064db0921c08e63245c403dad12410d2997715aa7aa36600bfaa895'
+            '68802613794439375a28bb20195a9c366c19cc289d761d8d35091b7576581797'
+            'fc23bd3c9e62a28cb1c020cebc83ca7532a5a7a21c2e4748b72d13ac7716a851'
+            '1da234751e2bd337a0991a0f90272bbf83b6cbd8945208825fa3d9dd580020e6'
+            'e767b371aed6cd09c7b7edac60d2e26644c295081396d551238594d1219e7ecb'
+            '3296a8719c86455574a15921ce7ab2f28a98e41d7c3746ae5230dee09653ae00')
+
+# Helper macros to help make tasks easier #
+apply_patch_with_msg() {
+  for _fname in "$@"
+  do
+    msg2 "Applying ${_fname}"
+    patch -Nbp1 -i "${srcdir}"/${_fname}
+  done
+}
+
+del_file_exists() {
+  for _fname in "$@"
+  do
+    if [ -f $_fname ] || [ -d $_fname ]; then
+      rm -rf $_fname
+    fi
+  done
+}
+# =========================================== #
 
 prepare() {
-  cd "$srcdir/libxslt-${pkgver}"
-  patch -p1 -i "${srcdir}/libxslt-1.1.26-w64.patch"
-  patch -p1 -i "${srcdir}/libxslt-1.1.27-disable_static_modules.patch"
-  patch -p1 -i "${srcdir}/libxslt-1.1.28-win32-shared.patch"
-  patch -p1 -i "${srcdir}/libxslt.m4-libxslt-1.1.26.patch"
-
-  patch -p1 -i "${srcdir}/0002-python-linking-on.mingw.patch"
-  patch -p1 -i "${srcdir}/0003-fix-concurrent-directory-creation.all.patch"
-  patch -p1 -i "${srcdir}/0004-add-missing-include-for-python.all.patch"
-  patch -p1 -i "${srcdir}/0005-fix-freelocales-export.all.patch"
-  patch -p1 -i "${srcdir}/0006-no-undefined-tests.patch"
-  patch -p1 -i "${srcdir}/0007-use-mingw-C99-compatible-functions-{v}snprintf.patch"
+  cd "${srcdir}/${_realname}-${pkgver}"
+  apply_patch_with_msg "libxslt-1.1.32-w64.patch" \
+    "libxslt-1.1.27-disable_static_modules.patch" \
+    "libxslt-1.1.32-win32-shared.patch" \
+    "libxslt.m4-libxslt-1.1.26.patch" \
+    "0002-python-linking-on.mingw.patch" \
+    "0003-fix-concurrent-directory-creation.all.patch" \
+    "0004-add-missing-include-for-python.all.patch" \
+    "0007-use-mingw-C99-compatible-functions-{v}snprintf.patch"  \
+    "0008-fix-warnings.patch"
 
   autoreconf -fi
 }
 
 build() {
-  mkdir -p "$srcdir/build-${CARCH}" && cd "$srcdir/build-${CARCH}"
-  $srcdir/libxslt-${pkgver}/configure \
+  [[ -d "${srcdir}/build-${CARCH}" ]] && rm -rf "${srcdir}/build-${CARCH}"
+  mkdir -p "${srcdir}/build-${CARCH}" && cd "${srcdir}/build-${CARCH}"
+ ../${_realname}-${pkgver}/configure \
     --prefix=${MINGW_PREFIX} \
     --build=${MINGW_CHOST} \
     --host=${MINGW_CHOST} \
@@ -68,17 +87,22 @@ build() {
     --with-python=${MINGW_PREFIX}/bin/python2
 
   # Hack for mingw python
-  pushd ${MINGW_PREFIX} > /dev/null
-  export PREFIX_DEPS=`pwd -W`
-  popd > /dev/null
+  local PREFIX_DEPS=$(cygpath -am ${MINGW_PREFIX})
   find . -type f -name "Makefile" -exec sed -i "s|${PREFIX_DEPS}|${MINGW_PREFIX}|g" {} \;
-  make
+  CC=${MINGW_PREFIX}/bin/gcc make
 }
 
 package() {
   export MSYS2_ARG_CONV_EXCL="-//OASIS"
-  cd "$srcdir/build-${CARCH}"
-  make DESTDIR="$pkgdir" install
-  #rm -r "${pkgdir}${MINGW_PREFIX}"/share
+  cd "${srcdir}/build-${CARCH}"
+  make DESTDIR="${pkgdir}" install
+
+  rm "${pkgdir}${MINGW_PREFIX}"/lib/python2.7/site-packages/*.a
+
+  local PREFIX_DEPS=$(cygpath -am ${MINGW_PREFIX})
+  pushd "${pkgdir}${MINGW_PREFIX}/lib/pkgconfig" > /dev/null
+  sed -s "s|${PREFIX_DEPS}|${MINGW_PREFIX}|g" -i ./libexslt.pc
+  sed -s "s|${PREFIX_DEPS}|${MINGW_PREFIX}|g" -i ./libxslt.pc
+  popd > /dev/null
 }
 

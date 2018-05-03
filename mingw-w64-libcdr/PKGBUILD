@@ -1,47 +1,52 @@
 # Maintainer: Alexey Pavlov <alexpux@gmail.com>
 
 _realname=libcdr
+pkgbase=mingw-w64-${_realname}
 pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}"
-pkgver=0.1.1
+pkgver=0.1.4
 pkgrel=1
-pkgdesc="CorelDraw file format importer library for LibreOffice (mingw-w64)"
+pkgdesc="libcdr is a library and a set of tools for reading and converting binary files produced by Corel DRAW (mingw-w64)"
 arch=('any')
-license=('GPL2' 'LGPL2.1' 'MPL')
+license=('MPL2')
 url="https://wiki.documentfoundation.org/DLP/Libraries/libcdr"
 options=('staticlibs' 'strip')
 makedepends=("${MINGW_PACKAGE_PREFIX}-gcc"
-            "${MINGW_PACKAGE_PREFIX}-boost"
-            "${MINGW_PACKAGE_PREFIX}-pkg-config"
-            "doxygen")
-depends=("${MINGW_PACKAGE_PREFIX}-libwpd"
+             "${MINGW_PACKAGE_PREFIX}-boost"
+             "${MINGW_PACKAGE_PREFIX}-pkg-config"
+             "${MINGW_PACKAGE_PREFIX}-doxygen"
+             "${MINGW_PACKAGE_PREFIX}-cppunit")
+depends=("${MINGW_PACKAGE_PREFIX}-icu"
          "${MINGW_PACKAGE_PREFIX}-lcms2"
          "${MINGW_PACKAGE_PREFIX}-librevenge"
-         "${MINGW_PACKAGE_PREFIX}-icu")
-source=(http://dev-www.libreoffice.org/src/${_realname}/${_realname}-$pkgver.tar.xz)
-md5sums=('72ed4d2f900eac95061207d026d5324c')
+         "${MINGW_PACKAGE_PREFIX}-zlib")
+source=(https://dev-www.libreoffice.org/src/${_realname}/${_realname}-${pkgver}.tar.xz)
+sha256sums=('e7a7e8b00a3df5798110024d7061fe9d1c3330277d2e4fa9213294f966a4a66d')
 
 prepare() {
   cd ${_realname}-${pkgver}
 }
 
 build() {
-  cd ${_realname}-${pkgver}
-  ./configure \
+  [[ -d ${srcdir}/build-${MINGW_CHOST} ]] && rm -rf ${srcdir}/build-${MINGW_CHOST}
+  mkdir -p ${srcdir}/build-${MINGW_CHOST}
+  cd "${srcdir}/build-${MINGW_CHOST}"
+  ../${_realname}-${pkgver}/configure \
     --prefix=${MINGW_PREFIX} \
     --build=${MINGW_CHOST} \
     --host=${MINGW_CHOST} \
     --enable-shared \
-    --enable-static
+    --enable-static \
+    --disable-silent-rules
 
-  make
+  make -j1
 }
 
 check() {
-  cd ${_realname}-${pkgver}
+  cd build-${MINGW_CHOST}
   make -k check
 }
 
 package() {
-  cd ${_realname}-${pkgver}
+  cd build-${MINGW_CHOST}
   make -j1 DESTDIR="${pkgdir}" install
 }

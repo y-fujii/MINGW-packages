@@ -1,6 +1,6 @@
-diff -urN a/Modules/_ctypes/callproc.c b/Modules/_ctypes/callproc.c
---- a/Modules/_ctypes/callproc.c	2014-10-11 14:20:14.135542400 +0100
-+++ b/Modules/_ctypes/callproc.c	2014-10-11 14:20:15.816638500 +0100
+diff -Naur Python-3.5.2-orig/Modules/_ctypes/callproc.c Python-3.5.2/Modules/_ctypes/callproc.c
+--- Python-3.5.2-orig/Modules/_ctypes/callproc.c	2016-06-26 00:38:37.000000000 +0300
++++ Python-3.5.2/Modules/_ctypes/callproc.c	2016-07-12 14:21:20.616800700 +0300
 @@ -727,6 +727,21 @@
  }
  
@@ -59,19 +59,18 @@ diff -urN a/Modules/_ctypes/callproc.c b/Modules/_ctypes/callproc.c
  #endif
      if ((flags & FUNCFLAG_PYTHONAPI) && PyErr_Occurred())
          return -1;
-diff -urN a/setup.py b/setup.py
---- a/setup.py	2014-10-11 14:20:14.291551300 +0100
-+++ b/setup.py	2014-10-11 14:20:15.818638700 +0100
-@@ -1940,6 +1940,8 @@
-                         depends=depends)
+--- Python-3.6.1/setup.py.orig	2017-06-13 18:39:22.632426100 +0200
++++ Python-3.6.1/setup.py	2017-06-13 18:40:10.272150900 +0200
+@@ -2019,6 +2019,8 @@
          ext_test = Extension('_ctypes_test',
-                              sources=['_ctypes/_ctypes_test.c'])
+                      sources=['_ctypes/_ctypes_test.c'],
+                      libraries=math_libs)
 +        if host_platform.startswith(('mingw', 'win')):
 +            ext_test.libraries.extend(['oleaut32'])
          self.extensions.extend([ext, ext_test])
  
-         if not '--with-system-ffi' in sysconfig.get_config_var("CONFIG_ARGS"):
-@@ -1973,6 +1975,8 @@
+         if host_platform == 'darwin':
+@@ -2055,6 +2057,8 @@
          if ffi_inc and ffi_lib:
              ext.include_dirs.extend(ffi_inc)
              ext.libraries.append(ffi_lib)

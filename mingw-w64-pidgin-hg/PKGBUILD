@@ -1,30 +1,37 @@
 # Maintainer: Alexey Pavlov <Alexpux@gmail.com>
+# Contributor: Renato Silva <br.renatosilva@gmail.com>
 
 _realname=pidgin
+pkgbase=mingw-w64-${_realname}-hg
 pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}-hg"
-provides=("${MINGW_PACKAGE_PREFIX}-${_realname}")
-conflicts=("${MINGW_PACKAGE_PREFIX}-${_realname}")
-pkgver=r36168.0203e8dce52d
+provides=(${MINGW_PACKAGE_PREFIX}-${_realname}
+          ${MINGW_PACKAGE_PREFIX}-libpurple
+          ${MINGW_PACKAGE_PREFIX}-finch)
+conflicts=(${MINGW_PACKAGE_PREFIX}-${_realname}
+          ${MINGW_PACKAGE_PREFIX}-libpurple
+          ${MINGW_PACKAGE_PREFIX}-finch)
+pkgver=r37643+.90e4018f26ea+
 pkgrel=1
 pkgdesc="Multi-protocol instant messaging client (mingw-w64)"
 arch=('any')
-url="http://pidgin.im/"
-license=("GPL")
-makedepends=("${MINGW_PACKAGE_PREFIX}-gcc"
-             "${MINGW_PACKAGE_PREFIX}-gtk-doc"
+url="https://pidgin.im/"
+license=(GPL2 partial:'GPL2+') # GPL2+, but Novell and SILC are GPL2-only
+makedepends=("${MINGW_PACKAGE_PREFIX}-doxygen"
+             "${MINGW_PACKAGE_PREFIX}-gcc"
              "${MINGW_PACKAGE_PREFIX}-pkg-config"
-             "doxygen"
+             "gtk-doc"
              "mercurial")
-depends=("${MINGW_PACKAGE_PREFIX}-ca-certificates"
-         #"${MINGW_PACKAGE_PREFIX}-farstream"
+depends=("${MINGW_PACKAGE_PREFIX}-adwaita-icon-theme"
+         "${MINGW_PACKAGE_PREFIX}-ca-certificates"
+         "${MINGW_PACKAGE_PREFIX}-farstream"
          "${MINGW_PACKAGE_PREFIX}-freetype"
          "${MINGW_PACKAGE_PREFIX}-fontconfig"
          "${MINGW_PACKAGE_PREFIX}-gettext"
          "${MINGW_PACKAGE_PREFIX}-gnutls"
+         "${MINGW_PACKAGE_PREFIX}-gplugin"
          "${MINGW_PACKAGE_PREFIX}-gsasl"
          "${MINGW_PACKAGE_PREFIX}-gtk3"
          "${MINGW_PACKAGE_PREFIX}-gtkspell"
-         "${MINGW_PACKAGE_PREFIX}-hicolor-icon-theme"
          "${MINGW_PACKAGE_PREFIX}-libgadu"
          "${MINGW_PACKAGE_PREFIX}-libidn"
          "${MINGW_PACKAGE_PREFIX}-nss"
@@ -34,17 +41,24 @@ depends=("${MINGW_PACKAGE_PREFIX}-ca-certificates"
 options=(!libtool strip staticlibs)
 
 source=(${_realname}::"hg+https://hg.pidgin.im/pidgin/main"
-        #"http://downloads.sourceforge.net/${_realname}/${_realname}-${pkgver}.tar.bz2"
-        )
-md5sums=('SKIP')
+        #"https://downloads.sourceforge.net/${_realname}/${_realname}-${pkgver}.tar.bz2"
+        001-build-fixes.patch
+        002-finch-fixes.patch)
+sha256sums=('SKIP'
+            '9b23f36083330994637f286da6206020e5771164bfa4565c28285ae995a93685'
+            '0f4a19b31e8a947c57aa648e2bba0724bbef019fad46fd9345d1a6280c5e6ae0')
 
 pkgver() {
-  cd "$_realname"
+  cd "${_realname}"
   printf "r%s.%s" "$(hg identify -n)" "$(hg identify -i)"
 }
 
 prepare() {
   cd ${_realname}
+
+  patch -b -V simple -p1 -i ${srcdir}/001-build-fixes.patch
+  patch -b -V simple -p1 -i ${srcdir}/002-finch-fixes.patch
+
   NOCONFIGURE=1 ./autogen.sh
 }
 
@@ -52,7 +66,7 @@ build() {
   cd "${srcdir}/${_realname}"
   sed -i "s#env python#env python2#" */plugins/*.py
   sed -i "s#env python#env python2#" libpurple/purple-{remote,notifications-example,url-handler}
-  ./configure \
+  INTLTOOL_PERL=/usr/bin/perl ./configure \
       --prefix=${MINGW_PREFIX} \
       --build=${MINGW_CHOST} \
       --host=${MINGW_CHOST} \
@@ -62,11 +76,11 @@ build() {
       --disable-screensaver \
       --disable-sm \
       --disable-nm \
-      --disable-vv \
-      --disable-tcl \
+      --disable-dbus \
       --with-python=${MINGW_PREFIX}/bin/python2 \
       --with-system-ssl-certs=${MINGW_PREFIX}/ssl/certs \
-      --with-win32-dirs=fhs
+      --with-win32-dirs=fhs \
+      --enable-consoleui \
       #--enable-cyrus-sasl
 
   make
@@ -75,4 +89,6 @@ build() {
 package() {
   cd "${srcdir}/${_realname}"
   make DESTDIR="${pkgdir}" install
+
+  install -Dm644 "${srcdir}/${_realname}/COPYING" "${pkgdir}${MINGW_PREFIX}/share/licenses/${_realname}/COPYING"
 }

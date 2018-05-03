@@ -1,0 +1,78 @@
+# Maintainer: Patrick Stewart <patstew@gmail.com>
+
+_realname=pyzmq
+pkgbase=mingw-w64-python-${_realname}
+pkgname=("${MINGW_PACKAGE_PREFIX}-python2-${_realname}" "${MINGW_PACKAGE_PREFIX}-python3-${_realname}")
+pkgver=16.0.2
+pkgrel=1
+pkgdesc="Python bindings for zeromq, written in Cython (mingw-w64)"
+arch=('any')
+url="http://www.zeromq.org/bindings:python"
+license=('LGPL')
+makedepends=("${MINGW_PACKAGE_PREFIX}-python2-setuptools"
+             "${MINGW_PACKAGE_PREFIX}-python3-setuptools"
+             "${MINGW_PACKAGE_PREFIX}-zeromq")
+_dtoken="af/37/8e0bf3800823bc247c36715a52e924e8f8fd5d1432f04b44b8cd7a5d7e55"
+source=("https://pypi.python.org/packages/${_dtoken}/${_realname}-${pkgver}.tar.gz"
+        "001-mingw-python.patch")
+sha256sums=('0322543fff5ab6f87d11a8a099c4c07dd8a1719040084b6ce9162bcdf5c45c9d'
+            '6f2f5f0a0e3e04052f9069e32f5a4459dccfafd5a1347cc90e7157784dabf109')
+prepare() {
+  cd "${srcdir}/${_realname}-${pkgver}"
+  patch -p1 -i ${srcdir}/001-mingw-python.patch
+
+  cd ${srcdir}
+  cp -a ${_realname}-${pkgver} py2zmq-${pkgver}
+}
+
+all_build() {
+  MSYS2_ARG_CONV_EXCL="--prefix=;--install-scripts=;--install-platlib=" \
+  ${MINGW_PREFIX}/bin/${1} setup.py install \
+    --prefix=${MINGW_PREFIX} --root=${pkgdir} --optimize=1 --zmq=${MINGW_PREFIX}
+
+  find "${pkgdir}/" -name "*.pyc" -delete
+  find "${pkgdir}/" -type d -empty -delete
+
+  rm -rf build
+}
+
+package_python3-pyzmq() {
+  local interpreter=python3
+  depends=("${MINGW_PACKAGE_PREFIX}-python3"
+           "${MINGW_PACKAGE_PREFIX}-zeromq")
+
+  cd "${srcdir}/${_realname}-${pkgver}"
+
+  sed -i 's|except socket.error, e:|except socket.error as e:|' zmq/eventloop/ioloop.py
+  sed -i 's|except gevent.Timeout, t:|except gevent.Timeout as t:|' zmq/green/core.py
+
+  all_build ${interpreter}
+}
+
+package_python2-pyzmq() {
+  local interpreter=python2
+  depends=("${MINGW_PACKAGE_PREFIX}-python2"
+           "${MINGW_PACKAGE_PREFIX}-zeromq")
+
+  cd "${srcdir}/py2zmq-${pkgver}"
+
+  rm -f ./buildutils/include_win32/stdint.h
+
+  all_build ${interpreter}
+}
+
+package_mingw-w64-i686-python2-pyzmq() {
+  package_python2-pyzmq
+}
+
+package_mingw-w64-i686-python3-pyzmq() {
+  package_python3-pyzmq
+}
+
+package_mingw-w64-x86_64-python2-pyzmq() {
+  package_python2-pyzmq
+}
+
+package_mingw-w64-x86_64-python3-pyzmq() {
+  package_python3-pyzmq
+}

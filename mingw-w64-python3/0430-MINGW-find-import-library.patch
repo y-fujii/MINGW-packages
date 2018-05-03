@@ -1,6 +1,6 @@
-diff -urN a/Lib/distutils/cygwinccompiler.py b/Lib/distutils/cygwinccompiler.py
---- a/Lib/distutils/cygwinccompiler.py	2014-10-11 14:20:36.095798400 +0100
-+++ b/Lib/distutils/cygwinccompiler.py	2014-10-11 14:20:39.245978600 +0100
+diff -Naur Python-3.5.2-orig/Lib/distutils/cygwinccompiler.py Python-3.5.2/Lib/distutils/cygwinccompiler.py
+--- Python-3.5.2-orig/Lib/distutils/cygwinccompiler.py	2016-07-12 14:21:32.060800700 +0300
++++ Python-3.5.2/Lib/distutils/cygwinccompiler.py	2016-07-12 14:21:32.300300700 +0300
 @@ -93,6 +93,7 @@
      obj_extension = ".o"
      static_lib_extension = ".a"

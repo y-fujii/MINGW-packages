@@ -2,38 +2,41 @@
 # Contributor: Ray Donnelly <mingw.android@gmail.com>
 
 _realname=blender
+pkgbase=mingw-w64-${_realname}-git
 pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}-git"
 provides=("${MINGW_PACKAGE_PREFIX}-${_realname}")
 conflicts=("${MINGW_PACKAGE_PREFIX}-${_realname}")
-blender_version=2.71
-pkgver=r56781.47ebf96
-_pyver=3.4
+blender_version=2.74
+pkgver=r58316.c32ded3
+_pyver=3.5
 pkgrel=1
 pkgdesc="A fully integrated 3D graphics creation suite (mingw-w64)"
 arch=('any')
 license=('GPL')
-url="http://www.blender.org"
+url="https://www.blender.org/"
 depends=("${MINGW_PACKAGE_PREFIX}-boost"
-        "${MINGW_PACKAGE_PREFIX}-glew"
-        "${MINGW_PACKAGE_PREFIX}-ffmpeg"
-        "${MINGW_PACKAGE_PREFIX}-fftw"
-        "${MINGW_PACKAGE_PREFIX}-freetype"
-        "${MINGW_PACKAGE_PREFIX}-libpng"
-        "${MINGW_PACKAGE_PREFIX}-libsndfile"
-        "${MINGW_PACKAGE_PREFIX}-libtiff"
-        "${MINGW_PACKAGE_PREFIX}-openexr"
-        "${MINGW_PACKAGE_PREFIX}-openal"
-        "${MINGW_PACKAGE_PREFIX}-opencollada"
-        "${MINGW_PACKAGE_PREFIX}-opencolorio"
-        "${MINGW_PACKAGE_PREFIX}-openimageio"
-        "${MINGW_PACKAGE_PREFIX}-openshadinglanguage"
-        "${MINGW_PACKAGE_PREFIX}-python3"
-        "${MINGW_PACKAGE_PREFIX}-python3-numpy"
-        "${MINGW_PACKAGE_PREFIX}-wintab-sdk")
-makedepends=("${MINGW_PACKAGE_PREFIX}-boost" "${MINGW_PACKAGE_PREFIX}-clang" "${MINGW_PACKAGE_PREFIX}-cmake"
+         "${MINGW_PACKAGE_PREFIX}-glew"
+         "${MINGW_PACKAGE_PREFIX}-ffmpeg"
+         "${MINGW_PACKAGE_PREFIX}-fftw"
+         "${MINGW_PACKAGE_PREFIX}-freetype"
+         "${MINGW_PACKAGE_PREFIX}-libpng"
+         "${MINGW_PACKAGE_PREFIX}-libsndfile"
+         "${MINGW_PACKAGE_PREFIX}-libtiff"
+         "${MINGW_PACKAGE_PREFIX}-openexr"
+         "${MINGW_PACKAGE_PREFIX}-openal"
+         "${MINGW_PACKAGE_PREFIX}-opencollada"
+         "${MINGW_PACKAGE_PREFIX}-opencolorio"
+         "${MINGW_PACKAGE_PREFIX}-openimageio"
+         "${MINGW_PACKAGE_PREFIX}-openshadinglanguage-git"
+         "${MINGW_PACKAGE_PREFIX}-python3"
+         "${MINGW_PACKAGE_PREFIX}-python3-numpy"
+         "${MINGW_PACKAGE_PREFIX}-wintab-sdk")
+makedepends=("${MINGW_PACKAGE_PREFIX}-clang"
+             "${MINGW_PACKAGE_PREFIX}-cmake"
+             "${MINGW_PACKAGE_PREFIX}-gcc"
              "git")
 #[[ $CARCH == x86_64 ]] && makedepends+=('cuda')
-optdepends=('cuda: cycles renderer cuda support')
+#optdepends=('cuda: cycles renderer cuda support')
 options=(!strip staticlibs !buildflags)
 #install=blender.install
 source=("${_realname}"::"git://git.blender.org/blender.git"
@@ -44,18 +47,24 @@ source=("${_realname}"::"git://git.blender.org/blender.git"
         "fix-mingw-w64-definitions.patch"
         "mingw-dont-install-3rdparty.patch"
         "fix-finding-glew.patch"
+        "fix-define-syntax.patch"
+        "mingw-DEBUG-libmv-avoid-too-many-sections.patch"
+        "mingw-DEBUG-dont-suffix-libs-with-_d.patch"
         "mingw-use-X11-like-path-layout.patch"
-        "fix-define-syntax.patch")
-md5sums=('SKIP'
-         'SKIP'
-         'SKIP'
-         'SKIP'
-         '803bad7d8a6bd148f88a1b66d36be31f'
-         '39e931d7652c9c95982330d95bfdd2e3'
-         '1969914e11d0a4f74dbfeddad742c9da'
-         'b11e3fe76c4433abb53c12e723dfbe4f'
-         'bdac7b47c5886bbcede99516a67de0c2'
-         '9c5a4e230d1c9081096d53d206cc03b4')
+        "osl-deprecate-api.patch")
+sha256sums=('SKIP'
+            'SKIP'
+            'SKIP'
+            'SKIP'
+            'dca840550978d23fd12e34393a63c46df4d7e2ec2c894cbc5bccf3832c16839b'
+            '1b33debd05f5378fa5010dbf341dca802b461f2b3cd19cb8bc204b5b87f60ca1'
+            '3ff7bf7ea57faaa04c5ddab28ec597ceea355537b1acfbe46cccf66487b70cbb'
+            '6c04651a6d49478f10a1be7874a455614ce74987543f6d91624c3a28c1debaf8'
+            '36a400c0f56f0f1ad0b6c7f9fad96c89fdc72dc0002af22f7f7fdbddafcdaddc'
+            'd3f4912e401b861af5bc66753098d1987892554973976bc6186c3ae49d8c43cb'
+            '02dac9a97126f67250b80065800b24fc7fe3ed5f6cf9f36f41e3535d9e8f64d4'
+            '31cb3c2fb177f774a0f401002be31e10ddf705cfd3dd35f0d778c34ee9e389d5'
+            '0d35523c84db1b1fd53c474d132f90e24f6e7106ed12cf721216be529f144d8b')
 
 pkgver() {
   cd "$srcdir/$_realname"
@@ -64,12 +73,15 @@ pkgver() {
 
 prepare() {
   cd "$srcdir/$_realname"
-  patch -p1 -i ${srcdir}/mingw-w64-cmake.patch
-  patch -p1 -i ${srcdir}/fix-mingw-w64-definitions.patch
-  patch -p1 -i ${srcdir}/mingw-dont-install-3rdparty.patch
-  patch -p1 -i ${srcdir}/fix-finding-glew.patch
-  patch -p1 -i ${srcdir}/fix-define-syntax.patch
-  patch -p1 -i ${srcdir}/mingw-use-X11-like-path-layout.patch
+  patch -p1 -i "${srcdir}"/mingw-w64-cmake.patch
+  patch -p1 -i "${srcdir}"/fix-mingw-w64-definitions.patch
+  patch -p1 -i "${srcdir}"/mingw-dont-install-3rdparty.patch
+  patch -p1 -i "${srcdir}"/fix-finding-glew.patch
+  patch -p1 -i "${srcdir}"/fix-define-syntax.patch
+  patch -p1 -i "${srcdir}"/mingw-DEBUG-libmv-avoid-too-many-sections.patch
+  patch -p1 -i "${srcdir}"/mingw-DEBUG-dont-suffix-libs-with-_d.patch
+  patch -p1 -i "${srcdir}"/mingw-use-X11-like-path-layout.patch
+  patch -p1 -i "${srcdir}"/osl-deprecate-api.patch
 
   cp -rf $srcdir/translations/* $srcdir/$_realname/release/datafiles/locale/
   cp -rf $srcdir/addons/* $srcdir/$_realname/release/scripts/addons/
@@ -132,9 +144,14 @@ package() {
   cd "$srcdir/build-${MINGW_CHOST}"
   make install
 
-  ${MINGW_PREFIX}/bin/python3 -m compileall "${pkgdir}${MINGW_PREFIX}/bin/$blender_version"
+  mkdir -p ${pkgdir}${MINGW_PREFIX}/lib
+  cp -r bin ${pkgdir}${MINGW_PREFIX}/
+  rm ${pkgdir}${MINGW_PREFIX}/bin/msgfmt.exe
+  mv ${pkgdir}${MINGW_PREFIX}/bin/*.a ${pkgdir}${MINGW_PREFIX}/lib/
+
+  ${MINGW_PREFIX}/bin/python3 -m compileall "${pkgdir}${MINGW_PREFIX}/share/blender/$blender_version"
   ${MINGW_PREFIX}/bin/python3 -m compileall \
-  ${pkgdir}${MINGW_PREFIX}/bin/$blender_version/scripts/startup \
-  ${pkgdir}${MINGW_PREFIX}/bin/$blender_version/scripts/modules \
-  ${pkgdir}${MINGW_PREFIX}/bin/$blender_version/scripts/addons
+  ${pkgdir}${MINGW_PREFIX}/share/blender/$blender_version/scripts/startup \
+  ${pkgdir}${MINGW_PREFIX}/share/blender/$blender_version/scripts/modules \
+  ${pkgdir}${MINGW_PREFIX}/share/blender/$blender_version/scripts/addons
 }

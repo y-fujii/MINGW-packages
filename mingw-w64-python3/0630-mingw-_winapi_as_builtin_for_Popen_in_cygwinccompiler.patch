@@ -1,6 +1,6 @@
-diff -urN a/Lib/distutils/cygwinccompiler.py b/Lib/distutils/cygwinccompiler.py
---- a/Lib/distutils/cygwinccompiler.py	2014-10-11 14:22:05.252897900 +0100
-+++ b/Lib/distutils/cygwinccompiler.py	2014-10-11 14:22:07.895049100 +0100
+diff -Naur Python-3.5.2-orig/Lib/distutils/cygwinccompiler.py Python-3.5.2/Lib/distutils/cygwinccompiler.py
+--- Python-3.5.2-orig/Lib/distutils/cygwinccompiler.py	2016-07-12 14:21:42.917300700 +0300
++++ Python-3.5.2/Lib/distutils/cygwinccompiler.py	2016-07-12 14:22:11.780300700 +0300
 @@ -58,6 +58,7 @@
  from distutils import log
  from distutils.version import LooseVersion
@@ -13,8 +13,8 @@ diff -urN a/Lib/distutils/cygwinccompiler.py b/Lib/distutils/cygwinccompiler.py
          return (CONFIG_H_UNCERTAIN,
                  "couldn't read '%s': %s" % (fn, exc.strerror))
  
--RE_VERSION = re.compile(b'(\d+\.\d+(\.\d+)*)')
-+RE_VERSION = re.compile(b'[\D\s]*(\d+\.\d+(\.\d+)*)[\D\s]*$')
+-RE_VERSION = re.compile(br'(\d+\.\d+(\.\d+)*)')
++RE_VERSION = re.compile(br'[\D\s]*(\d+\.\d+(\.\d+)*)[\D\s]*$')
  
  def _find_exe_version(cmd):
      """Find the version of an executable by running `cmd` in the shell.
@@ -36,21 +36,21 @@ diff -urN a/Lib/distutils/cygwinccompiler.py b/Lib/distutils/cygwinccompiler.py
      return tuple([_find_exe_version(cmd) for cmd in commands])
  
  def is_cygwingcc():
-diff -urN a/Modules/Setup.config.in b/Modules/Setup.config.in
---- a/Modules/Setup.config.in	2014-10-11 14:22:06.098946300 +0100
-+++ b/Modules/Setup.config.in	2014-10-11 14:22:07.896049100 +0100
-@@ -19,6 +19,7 @@
+diff -Naur Python-3.5.2-orig/Modules/Setup.config.in Python-3.5.2/Modules/Setup.config.in
+--- Python-3.5.2-orig/Modules/Setup.config.in	2016-07-12 14:22:05.619800700 +0300
++++ Python-3.5.2/Modules/Setup.config.in	2016-07-12 14:22:11.816800700 +0300
+@@ -18,6 +18,7 @@
+ # build-in modules for windows platform:
  @USE_WIN32_MODULE@winreg ../PC/winreg.c
- @USE_WIN32_MODULE@time timemodule.c
  @USE_WIN32_MODULE@msvcrt ../PC/msvcrtmodule.c
 +@USE_WIN32_MODULE@_winapi _winapi.c
  
  # The rest of the modules previously listed in this file are built
  # by the setup.py script in Python 2.1 and later.
-diff -urN a/setup.py b/setup.py
---- a/setup.py	2014-10-11 14:22:05.773927700 +0100
-+++ b/setup.py	2014-10-11 14:22:07.897049200 +0100
-@@ -898,7 +898,9 @@
+diff -Naur Python-3.5.2-orig/setup.py Python-3.5.2/setup.py
+--- Python-3.5.2-orig/setup.py	2016-07-12 14:21:53.888800700 +0300
++++ Python-3.5.2/setup.py	2016-07-12 14:22:11.822800700 +0300
+@@ -948,7 +948,9 @@
              exts.append( Extension('msvcrt', [os.path.join(pc_srcdir, p)
                  for p in ['msvcrtmodule.c']]) )
  
@@ -59,5 +59,5 @@ diff -urN a/setup.py b/setup.py
 +            # use subprocess (which uses Popen) in cygwinccompiler.py
 +            # exts.append( Extension('_winapi', ['_winapi.c']) )
  
-         def allow_db_ver(db_ver):
-             """Returns a boolean if the given BerkeleyDB version is acceptable.
+             exts.append( Extension('_msi', [os.path.join(pc_srcdir, p)
+                 for p in ['_msi.c']],

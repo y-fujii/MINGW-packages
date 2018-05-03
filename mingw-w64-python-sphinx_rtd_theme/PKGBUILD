@@ -1,0 +1,77 @@
+# Maintainer: Alexey Pavlov <Alexpux@gmail.com>
+
+_realname=sphinx_rtd_theme
+pkgbase=mingw-w64-python-${_realname}
+pkgname=("${MINGW_PACKAGE_PREFIX}-python2-${_realname}" "${MINGW_PACKAGE_PREFIX}-python3-${_realname}")
+pkgver=0.2.5b1
+pkgrel=1
+pkgdesc="Python Sphinx Read The Docs Theme (mingw-w64)"
+arch=('any')
+license=('MIT')
+url='https://github.com/snide/sphinx_rtd_theme'
+makedepends=("${MINGW_PACKAGE_PREFIX}-python2-setuptools"
+             "${MINGW_PACKAGE_PREFIX}-python3-setuptools")
+options=('staticlibs')
+_dtoken="59/e4/9e3a74a3271e6734911d3f549e8439db53b8ac29adf10c8f698e6c86246b"
+source=("https://pypi.python.org/packages/${_dtoken}/${_realname}-${pkgver}.tar.gz")
+sha256sums=('d99513e7f2f8b9da8fdc189ad83df926b83d7fb15ad7ed07f24665d1f29d38da')
+
+prepare() {
+  cd ${srcdir}
+  cp -r ${_realname}-${pkgver} python2-build
+  cp -r ${_realname}-${pkgver} python3-build
+}
+
+build() {
+  cd "${srcdir}"
+  for builddir in python{2,3}-build; do
+    pushd ${builddir}
+    ${MINGW_PREFIX}/bin/${builddir%-build} setup.py build
+    popd
+  done
+}
+
+check() {
+  cd "${srcdir}"
+  for builddir in python{2,3}-build; do
+    pushd ${builddir}
+    ${MINGW_PREFIX}/bin/${builddir%-build} py.test
+    popd
+  done
+}
+
+package_python2-sphinx_rtd_theme() {
+  depends=("${MINGW_PACKAGE_PREFIX}-python2")
+
+  cd "${srcdir}/python2-build"
+  MSYS2_ARG_CONV_EXCL="--prefix=;--install-scripts=;--install-platlib=" \
+    ${MINGW_PREFIX}/bin/python2 setup.py install --prefix=${MINGW_PREFIX} --root="${pkgdir}" -O1
+
+  install -Dm644 LICENSE "${pkgdir}${MINGW_PREFIX}/share/licenses/python2-${_realname}/COPYING"
+}
+
+package_python3-sphinx_rtd_theme() {
+  depends=("${MINGW_PACKAGE_PREFIX}-python3")
+
+  cd "${srcdir}/python3-build"
+  MSYS2_ARG_CONV_EXCL="--prefix=;--install-scripts=;--install-platlib=" \
+    ${MINGW_PREFIX}/bin/python3 setup.py install --prefix=${MINGW_PREFIX} --root="${pkgdir}" -O1
+
+  install -Dm644 LICENSE "${pkgdir}${MINGW_PREFIX}/share/licenses/python3-${_realname}/COPYING"
+}
+
+package_mingw-w64-i686-python2-sphinx_rtd_theme() {
+  package_python2-sphinx_rtd_theme
+}
+
+package_mingw-w64-i686-python3-sphinx_rtd_theme() {
+  package_python3-sphinx_rtd_theme
+}
+
+package_mingw-w64-x86_64-python2-sphinx_rtd_theme() {
+  package_python2-sphinx_rtd_theme
+}
+
+package_mingw-w64-x86_64-python3-sphinx_rtd_theme() {
+  package_python3-sphinx_rtd_theme
+}

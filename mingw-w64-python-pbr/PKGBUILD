@@ -1,0 +1,85 @@
+# Contributor: Frederic Wang <fred.wang@free.fr>
+
+_realname=pbr
+pkgbase=mingw-w64-python-${_realname}
+pkgname=("${MINGW_PACKAGE_PREFIX}-python2-${_realname}" "${MINGW_PACKAGE_PREFIX}-python3-${_realname}")
+pkgver=3.0.1
+pkgrel=1
+pkgdesc="Python Build Reasonableness (mingw-w64)"
+url="https://launchpad.net/pbr"
+license=("Apache License, Version 2.0")
+arch=('any')
+makedepends=("${MINGW_PACKAGE_PREFIX}-python2-setuptools"
+             "${MINGW_PACKAGE_PREFIX}-python3-setuptools"
+             "${MINGW_PACKAGE_PREFIX}-python2-six"
+             "${MINGW_PACKAGE_PREFIX}-python3-six")
+_dtoken="18/2e/28a7d361a568b1a6c86946674e8ac35a609573c3a3d12bb20f6aaf1c39bf"
+source=("https://pypi.python.org/packages/${_dtoken}/${_realname}-${pkgver}.tar.gz")
+sha256sums=('d7e8917458094002b9a2e0030ba60ba4c834c456071f2d0c1ccb5265992ada91')
+
+prepare() {
+  cd ${srcdir}
+  for pver in {2,3}; do 
+    rm -rf python${pver}-build-${CARCH}| true
+    cp -r "${_realname}-${pkgver}" "python${pver}-build-${CARCH}"
+  done
+}
+
+package_python3-pbr() {
+  depends=("${MINGW_PACKAGE_PREFIX}-python3-six")
+
+  cd ${srcdir}/python3-build-${CARCH}
+  ${MINGW_PREFIX}/bin/python3 setup.py build
+  MSYS2_ARG_CONV_EXCL="--prefix=;--install-scripts=;--install-platlib=" \
+  ${MINGW_PREFIX}/bin/python3 setup.py install --prefix=${MINGW_PREFIX} --root="${pkgdir}"
+
+  install -Dm644 "${srcdir}/${_realname}-${pkgver}/LICENSE" "${pkgdir}${MINGW_PREFIX}/share/licenses/python3-${_realname}/LICENSE"
+
+  local PREFIX_WIN=$(cygpath -wm ${MINGW_PREFIX})
+  # fix python command in files
+  for _f in "${pkgdir}${MINGW_PREFIX}"/bin/*.py; do
+    sed -e "s|${PREFIX_WIN}/bin/|/usr/bin/env |g" -i ${_f}
+  done
+}
+
+package_python2-pbr() {
+  depends=("${MINGW_PACKAGE_PREFIX}-python2-six")
+
+  cd ${srcdir}/python2-build-${CARCH}
+  ${MINGW_PREFIX}/bin/python2 setup.py build
+  MSYS2_ARG_CONV_EXCL="--prefix=;--install-scripts=;--install-platlib=" \
+  ${MINGW_PREFIX}/bin/python2 setup.py install --prefix=${MINGW_PREFIX} --root="${pkgdir}"
+
+  install -Dm644 "${srcdir}/${_realname}-${pkgver}/LICENSE" "${pkgdir}${MINGW_PREFIX}/share/licenses/python2-${_realname}/LICENSE"
+
+  local PREFIX_WIN=$(cygpath -wm ${MINGW_PREFIX})
+  # fix python command in files
+  for _f in "${pkgdir}${MINGW_PREFIX}"/bin/*.py; do
+    sed -e "s|${PREFIX_WIN}/bin/|/usr/bin/env |g" -i ${_f}
+  done
+
+  for f in pbr; do
+    mv "${pkgdir}${MINGW_PREFIX}"/bin/${f}{,2}.exe
+    if [ -f "${pkgdir}${MINGW_PREFIX}"/bin/${f}.exe.manifest ]; then
+      mv "${pkgdir}${MINGW_PREFIX}"/bin/${f}{,2}.exe.manifest
+      sed -e "s|${f}|${f}2|g" -i "${pkgdir}${MINGW_PREFIX}"/bin/${f}2.exe.manifest
+    fi
+    mv "${pkgdir}${MINGW_PREFIX}"/bin/${f}{,2}-script.py
+  done
+}
+
+package_mingw-w64-i686-python2-pbr() {
+  package_python2-pbr
+}
+
+package_mingw-w64-i686-python3-pbr() {
+  package_python3-pbr
+}
+
+package_mingw-w64-x86_64-python2-pbr() {
+  package_python2-pbr
+}
+
+package_mingw-w64-x86_64-python3-pbr() {
+  package_python3-pbr
+}

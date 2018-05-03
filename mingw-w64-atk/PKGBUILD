@@ -2,22 +2,23 @@
 # Contributor: Renato Silva <br.renatosilva@gmail.com>
 
 _realname=atk
+pkgbase=mingw-w64-${_realname}
 pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}"
-pkgver=2.15.4
+pkgver=2.26.1
 pkgrel=1
 pkgdesc="A library providing a set of interfaces for accessibility (mingw-w64)"
 arch=('any')
-url="http://www.gtk.org"
+url="https://www.gtk.org/"
 license=(LGPL2)
 makedepends=("${MINGW_PACKAGE_PREFIX}-gcc"
             "${MINGW_PACKAGE_PREFIX}-pkg-config"
-            "${MINGW_PACKAGE_PREFIX}-gobject-introspection")
+            "${MINGW_PACKAGE_PREFIX}-gobject-introspection"
+            "autoconf-archive")
 depends=("${MINGW_PACKAGE_PREFIX}-gcc-libs"
-        "${MINGW_PACKAGE_PREFIX}-gnome-common"
-        "${MINGW_PACKAGE_PREFIX}-glib2>=2.41.0")
+         "${MINGW_PACKAGE_PREFIX}-glib2>=2.46.0")
 options=('strip' 'staticlibs')
-source=("http://ftp.gnome.org/pub/gnome/sources/atk/${pkgver%.*}/${_realname}-$pkgver.tar.xz")
-md5sums=('430879fbffe433af118a2eb9c3bd69bf')
+source=("https://download.gnome.org/sources/atk/${pkgver%.*}/${_realname}-${pkgver}.tar.xz")
+sha256sums=('ef00ff6b83851dddc8db38b4d9faeffb99572ba150b0664ee02e46f015ea97cb')
 
 prepare() {
   cd "${srcdir}"/${_realname}-${pkgver}
@@ -27,6 +28,10 @@ prepare() {
 build() {
   mkdir -p "${srcdir}/build-${MINGW_CHOST}"
   cd "${srcdir}/build-${MINGW_CHOST}"
+
+  mkdir -p docs/html
+  cp -rf ../${_realname}-${pkgver}/docs/html/* docs/html
+
   "${srcdir}"/${_realname}-${pkgver}/configure \
     --prefix=${MINGW_PREFIX} \
     --build=${MINGW_CHOST} \
@@ -34,7 +39,10 @@ build() {
     --enable-static \
     --enable-shared \
     --enable-introspection \
-    --disable-glibtest
+    --disable-glibtest \
+    --without-libintl-prefix \
+    --without-libiconv-prefix
+
   make
 }
 

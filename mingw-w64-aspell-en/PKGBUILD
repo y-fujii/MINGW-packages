@@ -1,0 +1,35 @@
+# Maintainer: Alexey Pavlov <alexpux@gmail.com>
+
+_realname=aspell-en
+pkgbase=mingw-w64-${_realname}
+pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}"
+pkgver=7.1
+pkgrel=1
+pkgdesc="English dictionary for aspell (mingw-w64)"
+arch=('any')
+url="http://aspell.net/"
+license=('custom')
+depends=("${MINGW_PACKAGE_PREFIX}-aspell")
+source=(https://ftp.gnu.org/gnu/aspell/dict/en/aspell6-en-${pkgver}-0.tar.bz2
+        001-unixy-dirs.patch)
+sha256sums=('ff9df3c2e8c5bb19c6a66078b36a0ef4c4dfb0fcb969e29f7b5345e26d748d0a'
+            '1e2680a4e6498e1a2eb4e0e1f52eac3c8b2d76627ab8df7bb36bdc686d814ad3')
+
+prepare() {
+  cd "${srcdir}/aspell6-en-${pkgver}-0"
+  patch -p1 -i ${srcdir}/001-unixy-dirs.patch
+}
+
+build() {
+  cd "${srcdir}/aspell6-en-${pkgver}-0"
+  ./configure
+  sed -i 's/C\:\\msys64\\/\//' Makefile
+  make
+}
+
+package() {
+  cd "${srcdir}/aspell6-en-${pkgver}-0"
+  make DESTDIR="${pkgdir}" install
+
+  install -D -m644 Copyright "${pkgdir}${MINGW_PREFIX}/share/licenses/${_realname}/LICENSE"
+}

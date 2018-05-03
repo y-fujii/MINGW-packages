@@ -1,30 +1,35 @@
 # Maintainer: Martell Malone <Martell Malone at g mail dot com>
 
 _realname=ninja
-
+pkgbase=mingw-w64-${_realname}
 pkgname=("${MINGW_PACKAGE_PREFIX}-${_realname}")
-pkgver=1.5.1
+pkgver=1.8.2
 pkgrel=1
 pkgdesc="Ninja is a small build system with a focus on speed (mingw-w64)"
 arch=('any')
-url="http://martine.github.io/ninja"
+url="https://ninja-build.org"
 license=('Apache')
 depends=()
 options=('strip' 'staticlibs')
-makedepends=("python2")
-source=("https://github.com/martine/ninja/archive/v${pkgver}.tar.gz")
-md5sums=('59f4f1cf5d9bb0d7877a6d5a5afd770a')
+makedepends=("python2" "re2c")
+source=("${_realname}-${pkgver}.tar.gz"::"https://github.com/ninja-build/ninja/archive/v${pkgver}.tar.gz")
+sha256sums=('86b8700c3d0880c2b44c2ff67ce42774aaf8c28cbf57725cb881569288c1c6f4')
 
 prepare () {
   cd ${srcdir}/ninja-${pkgver}
+  #linking assumes windows cmd line but we are bash :)
+  sed -i 's|cmd /c $ar cqs $out.tmp $in && move /Y $out.tmp $out|$ar crs $out $in|g' ${srcdir}/ninja-${pkgver}/configure.py
 }
 
 build() {
   mkdir -p "${pkgdir}${MINGW_PREFIX}"/bin
   cd ${srcdir}/ninja-${pkgver}
-  ./bootstrap.py --platform mingw
+  ./configure.py --bootstrap --platform mingw
 }
 
 package() {
-    mv "${srcdir}/ninja-${pkgver}/ninja.exe" "${pkgdir}${MINGW_PREFIX}"/bin/
+  mkdir -p "${pkgdir}${MINGW_PREFIX}"/bin
+  mv "${srcdir}/ninja-${pkgver}/ninja.exe" "${pkgdir}${MINGW_PREFIX}"/bin/
+  mkdir -p "${pkgdir}${MINGW_PREFIX}"/lib
+  mv "${srcdir}/ninja-${pkgver}/build/libninja.a" "${pkgdir}${MINGW_PREFIX}"/lib/
 }

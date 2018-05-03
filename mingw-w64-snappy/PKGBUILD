@@ -1,50 +1,53 @@
 # Maintainer: Norbert Pfeiler <norbert.pfeiler@gmail.com>
 
 _realname=snappy
-pkgname="$MINGW_PACKAGE_PREFIX-${_realname}"
-pkgver=1.1.1
+pkgbase=mingw-w64-${_realname}
+pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}"
+pkgver=1.1.4
 pkgrel=1
 pkgdesc="A fast C++ compressor/decompressor library (mingw-w64)"
 arch=('any')
 license=('New BSD License')
-url="http://snappy.googlecode.com"
-depends=("$MINGW_PACKAGE_PREFIX-gcc-libs")
-makedepends=("$MINGW_PACKAGE_PREFIX-gcc"
+url="hhttps://github.com/google/snappy"
+depends=("${MINGW_PACKAGE_PREFIX}-gcc-libs")
+makedepends=("${MINGW_PACKAGE_PREFIX}-gcc"
              "make")
-checkdepends=("$MINGW_PACKAGE_PREFIX-zlib"
-              "$MINGW_PACKAGE_PREFIX-lzo2")
-source=("http://snappy.googlecode.com/files/${_realname}-$pkgver.tar.gz"
-        001-no-undefined.patch)
-md5sums=('8887e3b7253b22a31f5486bca3cbc1c2'
-         '8df88ce30eafb903bb9e51a57b947da7')
+checkdepends=("${MINGW_PACKAGE_PREFIX}-lzo2"
+              "${MINGW_PACKAGE_PREFIX}-zlib")
+source=(https://github.com/google/snappy/releases/download/${pkgver}/${_realname}-${pkgver}.tar.gz
+        001-no-undefined.patch
+        002-am_prog-ar.patch)
+sha256sums=('134bfe122fd25599bb807bb8130e7ba6d9bdb851e0b16efcb83ac4f5d0b70057'
+            '3163a8cde8a0aef67498bb70975ff8f2f9b3dd075060c13472ef9b818e771faa'
+            '88144991583e9b6cca6f00cfc4926305491601496a952e99e788898553debcc5')
 
 prepare() {
-  pushd ${_realname}-$pkgver > /dev/null
+  cd ${_realname}-${pkgver}
   patch -p1 -i ${srcdir}/001-no-undefined.patch
+  patch -p1 -i ${srcdir}/002-am_prog-ar.patch
   autoreconf -fi
-  popd > /dev/null
+}
 
+build() {
+  [[ -d "${srcdir}"/build-${MINGW_CHOST} ]] && rm -rf "${srcdir}"/build-${MINGW_CHOST}
   mkdir -p build-${MINGW_CHOST}
   cd ${srcdir}/build-${MINGW_CHOST}
 
-  ../${_realname}-$pkgver/configure \
+  ../${_realname}-${pkgver}/configure \
     --prefix="$MINGW_PREFIX" \
     --build=${MINGW_CHOST} \
     --host=${MINGW_CHOST} \
     --target=${MINGW_CHOST}
-}
 
-build() {
-  cd "build-${MINGW_CHOST}"
   make
 }
 
 check() {
-  cd "build-${MINGW_CHOST}"
-  ./snappy_unittest.exe
+  cd "${srcdir}/${_realname}-${pkgver}"
+  "../build-${MINGW_CHOST}/snappy_unittest.exe"
 }
 
 package() {
   cd "build-${MINGW_CHOST}"
-  make DESTDIR=$pkgdir install
+  make DESTDIR=${pkgdir} install
 }

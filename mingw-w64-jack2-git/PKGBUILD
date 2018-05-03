@@ -1,0 +1,39 @@
+_realname='jack2-git'
+pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}"
+pkgver=v1.9.10.r297.gc1647819
+pkgrel=1
+pkgdesc='The next-generation JACK with SMP support (mingw-w64)'
+arch=('any')
+url='http://jackaudio.org/'
+license=('GPL')
+makedepends=("${MINGW_PACKAGE_PREFIX}-gcc"
+             "${MINGW_PACKAGE_PREFIX}-pkg-config"
+             'python3'
+             'git')
+depends=("${MINGW_PACKAGE_PREFIX}-gcc-libs"
+         "${MINGW_PACKAGE_PREFIX}-portaudio"
+         "${MINGW_PACKAGE_PREFIX}-opus"
+         "${MINGW_PACKAGE_PREFIX}-libsamplerate"
+         "${MINGW_PACKAGE_PREFIX}-libsndfile"
+         "${MINGW_PACKAGE_PREFIX}-readline")
+source=("${_realname}::git+https://github.com/jackaudio/jack2.git")
+sha256sums=('SKIP')
+
+pkgver() {
+  cd "${srcdir}/${_realname}"
+  git describe --long | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+build() {
+  cd "${srcdir}/${_realname}"
+  /usr/bin/python3 waf configure "--prefix=${MINGW_PREFIX}" --celt=no
+  /usr/bin/python3 waf build
+}
+
+package() {
+  cd "${srcdir}/${_realname}"
+  /usr/bin/python3 waf "--destdir=${pkgdir}" install
+  cd "${pkgdir}/${MINGW_PREFIX}"
+  rm bin/jack/*.a
+  mv bin/*.a lib/
+}

@@ -1,13 +1,10 @@
-diff -urN a/configure.ac b/configure.ac
---- a/configure.ac	2014-10-11 14:18:49.139680900 +0100
-+++ b/configure.ac	2014-10-11 14:18:51.927840400 +0100
-@@ -1873,10 +1873,22 @@
+--- Python-3.6.1/configure.ac.orig	2017-06-13 10:13:37.391777600 +0200
++++ Python-3.6.1/configure.ac	2017-06-13 12:08:23.122618900 +0200
+@@ -2301,8 +2301,20 @@
  ])
  
  AC_MSG_CHECKING(whether to enable large file support)
 +have_largefile_support=no
- if test "$have_long_long" = yes
- then
  if test "$ac_cv_sizeof_off_t" -gt "$ac_cv_sizeof_long" -a \
  	"$ac_cv_sizeof_long_long" -ge "$ac_cv_sizeof_off_t"; then
 +  have_largefile_support=yes
@@ -19,18 +16,8 @@ diff -urN a/configure.ac b/configure.ac
 +    ;;
 +  esac
 +fi
-+fi
++
 +if test $have_largefile_support = yes ; then
-   AC_DEFINE(HAVE_LARGEFILE_SUPPORT, 1, 
+   AC_DEFINE(HAVE_LARGEFILE_SUPPORT, 1,
    [Defined to enable large file support when an off_t is bigger than a long
     and long long is available and at least as big as an off_t. You may need
-@@ -1886,9 +1898,6 @@
- else
-   AC_MSG_RESULT(no)
- fi
--else
--  AC_MSG_RESULT(no)
--fi
- 
- AC_CHECK_SIZEOF(time_t, [], [
- #ifdef HAVE_SYS_TYPES_H

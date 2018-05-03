@@ -1,0 +1,18 @@
+diff --git a/src/bootstrap/bootstrap.py b/src/bootstrap/bootstrap.py
+index 17a7c9c..4e3ca0d 100644
+--- a/src/bootstrap/bootstrap.py
++++ b/src/bootstrap/bootstrap.py
+@@ -61,13 +61,6 @@
+ def download(path, url, probably_big, verbose):
+     if probably_big or verbose:
+         print("downloading {}".format(url))
+-    # see http://serverfault.com/questions/301128/how-to-download
+-    if sys.platform == 'win32':
+-        run(["PowerShell.exe", "/nologo", "-Command",
+-             "(New-Object System.Net.WebClient)"
+-             ".DownloadFile('{}', '{}')".format(url, path)],
+-            verbose=verbose)
+-    else:
+         if probably_big or verbose:
+             option = "-#"
+         else:

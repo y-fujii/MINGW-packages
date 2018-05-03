@@ -1,0 +1,35 @@
+# Maintainer: Alexey Pavlov <alexpux@gmail.com>
+
+_realname=aspell-de
+pkgbase=mingw-w64-${_realname}
+pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}"
+pkgver=20030222
+pkgrel=1
+pkgdesc="German dictionary for aspell (mingw-w64)"
+arch=('any')
+url="http://aspell.net/"
+license=('custom')
+depends=("${MINGW_PACKAGE_PREFIX}-aspell")
+source=(https://ftp.gnu.org/gnu/aspell/dict/de/aspell6-de-${pkgver}-1.tar.bz2
+        001-unixy-dirs.patch)
+sha256sums=('ba6c94e11bc2e0e6e43ce0f7822c5bba5ca5ac77129ef90c190b33632416e906'
+            'e96902930299fc65275fc14d8dde1d02378875382c7275bd2067cc49666f60cc')
+
+prepare() {
+  cd "${srcdir}/aspell6-de-${pkgver}-1"
+  patch -p1 -i ${srcdir}/001-unixy-dirs.patch
+}
+
+build() {
+  cd "${srcdir}/aspell6-de-${pkgver}-1"
+  ./configure
+  sed -i 's/C\:\\msys64\\/\//' Makefile
+  make
+}
+
+package() {
+  cd "${srcdir}/aspell6-de-${pkgver}-1"
+  make DESTDIR="${pkgdir}" install
+
+  install -D -m644 Copyright "${pkgdir}${MINGW_PREFIX}/share/licenses/${_realname}/LICENSE"
+}

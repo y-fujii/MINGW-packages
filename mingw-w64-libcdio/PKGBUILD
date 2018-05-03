@@ -2,23 +2,24 @@
 # Contributor: AlexWMF <alexxwmf@gmail.com>
 
 _realname=libcdio
+pkgbase=mingw-w64-${_realname}
 pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}"
-pkgver=0.93
+pkgver=1.1.0
 pkgrel=1
 pkgdesc="GNU Compact Disc Input and Control Library"
 arch=('any')
 license=('GPL3')
-url="http://www.gnu.org/software/libcdio/"
+url="https://www.gnu.org/software/libcdio/"
 options=('staticlibs' 'strip')
 makedepends=("${MINGW_PACKAGE_PREFIX}-gcc"
-            "${MINGW_PACKAGE_PREFIX}-pkg-config")
+             "${MINGW_PACKAGE_PREFIX}-pkg-config")
 depends=("${MINGW_PACKAGE_PREFIX}-libiconv"
          "${MINGW_PACKAGE_PREFIX}-libcddb")
-source=(http://ftp.gnu.org/gnu/libcdio/${_realname}-${pkgver}.tar.gz{,.sig}
+source=(https://ftp.gnu.org/gnu/libcdio/${_realname}-${pkgver}.tar.gz{,.sig}
         libcdio-0.83-linking.patch)
-md5sums=('d154476feaac5a7b5f180e83eaf3d689'
-         'SKIP'
-         '5a7f50209c03d5919d5b932f07871af7')
+sha256sums=('785c32494e4770c38bef09b1a545ef3acec8ccfbf2b799cb7e70dc380cbcf164'
+            'SKIP'
+            'd88186b2a11726fe5ef10853e0245996b55793552b14230d1f7ba5ee3c54f3ed')
 
 prepare() {
   cd ${_realname}-${pkgver}
@@ -28,8 +29,10 @@ prepare() {
 }
 
 build() {
-  cd ${_realname}-${pkgver}
-  ./configure \
+  [[ -d build-${MINGW_CHOST} ]] && rm -rf build-${MINGW_CHOST}
+  mkdir -p "${srcdir}/build-${MINGW_CHOST}"
+  cd "${srcdir}/build-${MINGW_CHOST}"
+  ../${_realname}-${pkgver}/configure \
     --prefix=${MINGW_PREFIX} \
     --build=${MINGW_CHOST} \
     --host=${MINGW_CHOST} \
@@ -37,11 +40,12 @@ build() {
     --enable-cpp-progs \
     --enable-shared \
     --enable-static
+
   make
 }
 
 package() {
-  cd ${_realname}-${pkgver}
+  cd build-${MINGW_CHOST}
   make -j1 DESTDIR="${pkgdir}" install
 
   sed -i "/LIBCDIO_SOURCE_PATH/s|.*|/* #undef LIBCDIO_SOURCE_PATH */|" \

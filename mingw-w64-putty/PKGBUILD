@@ -1,60 +1,53 @@
 # Maintainer: David Macek <david.macek.0@gmail.com>
 
-# todo fix or explain: -DDEBUG -DWIN32S_COMPAT -D_NO_OLDNAMES -DNO_MULTIMON -DNO_HTMLHELP -DNO_SECUREZEROMEMORY
 # todo check if unix directory is interesting
 # todo install docs
 
 _realname=putty
-pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}-svn"
-_base_ver=0.63
-pkgver=0.63.r10297
-pkgrel=2
+pkgbase=mingw-w64-${_realname}
+pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}"
+pkgver=0.69
+pkgrel=1
 pkgdesc="A free telnet/SSH client (mingw-w64)"
 arch=('any')
-url="http://www.chiark.greenend.org.uk/~sgtatham/putty/"
+url="https://www.chiark.greenend.org.uk/~sgtatham/putty/"
 license=('MIT')
-makedepends=("${MINGW_PACKAGE_PREFIX}-gcc"
-             "subversion")
 depends=("${MINGW_PACKAGE_PREFIX}-gcc-libs")
 optdepends=("${MINGW_PACKAGE_PREFIX}-putty-ssh: ssh wrapper for plink")
-source=("$_realname::svn+svn://svn.tartarus.org/sgt/putty"
-        '0001-fixes.patch'
-	'0002-casts.patch'
-	'0003-linedraw.patch')
-md5sums=('SKIP'
-         '5b5065e5bd2b8421196c068d428bfb57'
-	 '1e4f574c0a0c6dfc8ec676f93fa109e7'
-	 '2f7c232dd89a30cbe6e8b7dec329cda4')
-
-pkgver() {
-  cd "${srcdir}"/${_realname}
-  local ver="$(svnversion)"
-  printf "%s.r%s" "${_base_ver}" "${ver//[[:alpha:]]}"
-}
+replaces=("${MINGW_PACKAGE_PREFIX}-${_realname}-git"
+          "${MINGW_PACKAGE_PREFIX}-${_realname}-svn")
+source=("https://the.earth.li/~sgtatham/putty/latest/${_realname}-${pkgver}.tar.gz"
+        '0001-Fixes-for-various-compilation-warnings.patch'
+        '0003-linedraw.patch')
+sha256sums=('b7dad241ff01b0cbb9dc4c1471ec7cacf8f08d98a581aeb2f336da3c0eb96ad1'
+            '0c7528518319e3b514d0b8c929c8d73bca6c8e3a1a5ece4ab2329bca994a8aa5'
+            '344e01c8032b258532c2edd2eb468adceab7c90f73ca38171487d9fa696a112e')
 
 prepare() {
-  cd "${srcdir}"/${_realname}
-  patch -p0 -i "${srcdir}"/0001-fixes.patch
-  patch -p1 -i "${srcdir}"/0002-casts.patch
+  cd "${srcdir}"/${_realname}-${pkgver}
+  patch -p1 -i "${srcdir}"/0001-Fixes-for-various-compilation-warnings.patch
   patch -p1 -i "${srcdir}"/0003-linedraw.patch
+
+  mkdir -p "${srcdir}"/${_realname}-build-${CARCH}
+  cp -r "${srcdir}"/${_realname}-${pkgver}/* "${srcdir}"/${_realname}-build-${CARCH}
 }
 
 build() {
-  cd "${srcdir}"/${_realname}
+  cd "${srcdir}"/${_realname}-build-${CARCH}
 
   ./mkfiles.pl
   cd windows
   if [ "${CARCH}" = "x86_64" ]; then
     sed -i 's/x86/amd64/' *.mft
   fi
-  make -f Makefile.cyg
+  make -f Makefile.mgw
 }
 
 package() {
-  cd "${srcdir}"/${_realname}/windows
+  cd "${srcdir}"/${_realname}-build-${CARCH}/windows
   install -D -m644 ../LICENCE "${pkgdir}${MINGW_PREFIX}"/share/licenses/${_realname}/LICENSE
-  for f in putty.exe puttygen.exe pageant.exe plink.exe pscp.exe psftp.exe puttytel.exe
+  for f in putty puttygen pageant plink pscp psftp puttytel
   do
-    install -D -m755 $f "${pkgdir}"/${MINGW_PREFIX}/bin/$f
+    install -D -m755 ${f}.exe "${pkgdir}"/${MINGW_PREFIX}/bin/${f}.exe
   done
 }

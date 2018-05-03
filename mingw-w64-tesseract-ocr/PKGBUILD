@@ -2,31 +2,32 @@
 # Maintainer: Ray Donnelly <mingw.android@gmail.com>
 
 _realname=tesseract-ocr
+pkgbase=mingw-w64-${_realname}
 pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}"
-pkgver=3.03.298e31465a44
+pkgver=3.05.01
 pkgrel=1
 pkgdesc="Tesseract OCR (mingw-w64)"
 arch=('any')
-url="https://code.google.com/p/tesseract-ocr/"
+url="https://github.com/tesseract-ocr/tesseract"
 license=("Apache License 2.0")
 makedepends=("${MINGW_PACKAGE_PREFIX}-gcc" "${MINGW_PACKAGE_PREFIX}-pkg-config")
-depends=(${MINGW_PACKAGE_PREFIX}-gcc-libs
-        ${MINGW_PACKAGE_PREFIX}-leptonica
-        ${MINGW_PACKAGE_PREFIX}-icu
-        ${MINGW_PACKAGE_PREFIX}-cairo
-        ${MINGW_PACKAGE_PREFIX}-pango
-        ${MINGW_PACKAGE_PREFIX}-zlib)
+depends=(${MINGW_PACKAGE_PREFIX}-cairo
+         ${MINGW_PACKAGE_PREFIX}-gcc-libs
+         ${MINGW_PACKAGE_PREFIX}-icu
+         ${MINGW_PACKAGE_PREFIX}-leptonica
+         ${MINGW_PACKAGE_PREFIX}-pango
+         ${MINGW_PACKAGE_PREFIX}-zlib)
 options=('!libtool' 'strip')
-source=("https://tesseract-ocr.googlecode.com/archive/298e31465a445e54defedd076217ff24b1af3fc2.tar.gz"
-        "0001-Fix-broken_MSC_VER-checks.patch"
-        "0002-Use-intptr_t-for-pointer-cast-target.patch")
-sha256sums=('SKIP'
-            '69e00058dd7c32c2c205dc1247b07edd43b3ba30faa4af67b646a8f7b58c6494'
-            '5a74ecf3d06f950064b7d570166629497940d491c85dda5b65defa66f65d47aa')
+source=(${_realname}-${pkgver}.tar.gz::https://github.com/tesseract-ocr/tesseract/archive/${pkgver}.tar.gz
+        https://github.com/tesseract-ocr/tessdata/raw/master/osd.traineddata
+        001-proper-include-thread.patch)
+sha256sums=('05898f93c5d057fada49b9a116fc86ad9310ff1726a0f499c3e5211b3af47ec1'
+            '9cf5d576fcc47564f11265841e5ca839001e7e6f38ff7f7aacf46d15a96b00ff'
+            'c3c43f7b779ff86e83e416cf2cd060751f077cd289c89dfbc11ee7d2ec9840e9')
+
 prepare() {
-  cd "$srcdir/${_realname}-298e31465a44"
-  patch -p1 -i "${srcdir}"/0001-Fix-broken_MSC_VER-checks.patch
-  patch -p1 -i "${srcdir}"/0002-Use-intptr_t-for-pointer-cast-target.patch
+  cd "${srcdir}/tesseract-${pkgver}"
+  patch -p1 -i ${srcdir}/001-proper-include-thread.patch
   ./autogen.sh
 }
 
@@ -39,7 +40,7 @@ build() {
     extra_config+=( --enable-debug )
   fi
 
-  ${srcdir}/${_realname}-298e31465a44/configure \
+  ../tesseract-${pkgver}/configure \
     --build=${MINGW_CHOST} \
     --host=${MINGW_CHOST} \
     --target=${MINGW_CHOST} \
@@ -48,6 +49,7 @@ build() {
     "${extra_config[@]}"
 
   make
+  make training
 }
 
 check() {
@@ -57,7 +59,8 @@ check() {
 
 package() {
   cd "${srcdir}/build-${MINGW_CHOST}"
-  make DESTDIR="$pkgdir" install
-  make training
-  make DESTDIR="$pkgdir" training-install
+  make DESTDIR="${pkgdir}" install
+  make DESTDIR="${pkgdir}" training-install
+  mkdir -p ${pkgdir}${MINGW_PREFIX}/share/tessdata
+  install -Dm0644 ${srcdir}/osd.traineddata ${pkgdir}${MINGW_PREFIX}/share/tessdata/osd.traineddata
 }

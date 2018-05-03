@@ -1,6 +1,7 @@
 # Maintainer: Alexey Pavlov <alexpux@gmail.com>
 
 _realname=simage
+pkgbase=mingw-w64-${_realname}-hg
 pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}-hg"
 pkgver=r672.8ea3f7b43f03
 pkgrel=1
@@ -18,10 +19,10 @@ depends=("${MINGW_PACKAGE_PREFIX}-libjpeg-turbo"
 makedepends=("mercurial" "${MINGW_PACKAGE_PREFIX}-cmake" "${MINGW_PACKAGE_PREFIX}-gcc")
 provides=("${MINGW_PACKAGE_PREFIX}-${_realname}")
 conflicts=("${MINGW_PACKAGE_PREFIX}-${_realname}")
-url=('https://bitbucket.org/Coin3D/simage/overview')
+url='https://bitbucket.org/Coin3D/simage/overview'
 source=("${_realname}"::"hg+https://bitbucket.org/msys2/simage")
 options=(!strip staticlibs)
-md5sums=('SKIP')
+sha256sums=('SKIP')
 
 pkgver() {
   cd "$srcdir/$_realname"

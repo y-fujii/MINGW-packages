@@ -1,10 +1,9 @@
-diff -urN a/setup.py b/setup.py
---- a/setup.py	2014-10-11 14:20:55.673918200 +0100
-+++ b/setup.py	2014-10-11 14:20:58.333070300 +0100
-@@ -2211,7 +2211,7 @@
+--- Python-3.6.1/setup.py.orig	2017-06-13 13:01:14.879033000 +0200
++++ Python-3.6.1/setup.py	2017-06-13 13:01:54.864320000 +0200
+@@ -2292,7 +2292,7 @@
              else:
                  newfilename = filename + minoronly
-             log.info('renaming {} to {}'.format(filename, newfilename))
+             log.info('renaming %s to %s', filename, newfilename)
 -            os.rename(filename, newfilename)
 +            os.replace(filename, newfilename)
              newoutfiles.append(newfilename)

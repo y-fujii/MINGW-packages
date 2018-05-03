@@ -1,27 +1,31 @@
 # Maintainer: Daniel Espinosa <esodan@gmail.com>
 
 _realname=gxml
+pkgbase=mingw-w64-${_realname}
 pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}"
-pkgver=0.4.1
-pkgrel=2
+pkgver=0.12.0
+pkgrel=1
 arch=('any')
-groups=("${MINGW_PACKAGE_PREFIX}")
-pkgdesc="LibXML2 GObject wrapper version 0.4 (mingw-w64)"
+pkgdesc="GObject Libxml2 wrapper and Serializer Framework (mingw-w64)"
 depends=("${MINGW_PACKAGE_PREFIX}-gcc-libs"
-        "${MINGW_PACKAGE_PREFIX}-gettext"
-        "${MINGW_PACKAGE_PREFIX}-zlib"
-        "${MINGW_PACKAGE_PREFIX}-xz"
-        "${MINGW_PACKAGE_PREFIX}-libxml2"
-        "${MINGW_PACKAGE_PREFIX}-glib2>=2.34.0"
-        "${MINGW_PACKAGE_PREFIX}-libgee"
-        "${MINGW_PACKAGE_PREFIX}-vala"
-        "${MINGW_PACKAGE_PREFIX}-gobject-introspection")
-makedepends=("${MINGW_PACKAGE_PREFIX}-gcc" "${MINGW_PACKAGE_PREFIX}-pkg-config" "${MINGW_PACKAGE_PREFIX}-libtool")
-options=('strip' 'staticlibs')
+         "${MINGW_PACKAGE_PREFIX}-gettext"
+         "${MINGW_PACKAGE_PREFIX}-glib2>=2.34.0"
+         "${MINGW_PACKAGE_PREFIX}-libgee"
+         "${MINGW_PACKAGE_PREFIX}-libxml2"
+         "${MINGW_PACKAGE_PREFIX}-xz"
+         "${MINGW_PACKAGE_PREFIX}-zlib")
+makedepends=("${MINGW_PACKAGE_PREFIX}-gcc"
+             "${MINGW_PACKAGE_PREFIX}-pkg-config"
+             "${MINGW_PACKAGE_PREFIX}-libtool"
+             "${MINGW_PACKAGE_PREFIX}-gobject-introspection"
+             "${MINGW_PACKAGE_PREFIX}-vala"
+             "make" "autoconf" "automake" "intltool")
 license=('LGPL')
-url="http://live.gnome.org/GXml"
-source=("http://ftp.gnome.org/pub/GNOME/sources/${_realname}/${pkgver:0:3}/${_realname}-$pkgver.tar.xz")
-sha256sums=('f821c5b076208aa311151c263b951aaab27991663edd1918c05522aa0463663d')
+url="https://wiki.gnome.org/GXml"
+
+options=('strip' 'staticlibs')
+source=("https://download.gnome.org/sources/${_realname}/${pkgver%.*}/${_realname}-${pkgver}.tar.xz")
+sha256sums=('f9310d81078df031c8a5defc90be814a4666e641fb242cd3f4b6f3b6706fb44d')
 
 prepare() {
   cd "${srcdir}"/${_realname}-${pkgver}

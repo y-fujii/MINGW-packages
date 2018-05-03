@@ -1,19 +1,28 @@
 # Maintainer: Alexey Pavlov <alexpux@gmail.com>
 
 _realname=docbook-xsl
+pkgbase=mingw-w64-${_realname}
 pkgname=("${MINGW_PACKAGE_PREFIX}-${_realname}")
-pkgver=1.78.1
-pkgrel=5
+pkgver=1.79.2
+pkgrel=2
 pkgdesc='XML stylesheets for Docbook-xml transformations (mingw-w64)'
 arch=('any')
 license=('custom')
-url='http://docbook.sourceforge.net/'
+url='http://docbook.org/'
 depends=("${MINGW_PACKAGE_PREFIX}-libxml2"
          "${MINGW_PACKAGE_PREFIX}-libxslt"
          "${MINGW_PACKAGE_PREFIX}-docbook-xml")
 install=${_realname}-${CARCH}.install
-source=("http://downloads.sourceforge.net/docbook/${_realname}-${pkgver}.tar.bz2")
-md5sums=('6dd0f89131cc35bf4f2ed105a1c17771')
+source=("https://github.com/docbook/xslt10-stylesheets/releases/download/release/${pkgver}/docbook-xsl-${pkgver}.tar.bz2"
+        "0001-add-back-old-uri-rewrite.patch")
+sha256sums=('316524ea444e53208a2fb90eeb676af755da96e1417835ba5f5eb719c81fa371'
+            'd327885bab0027e9c2c646cdd0d0d1bd264b9f4a5e908d6244ed0cfa1e5b37ff')
+
+prepare() {
+  cd "${srcdir}"/${_realname}-${pkgver}
+
+  patch -p1 -i ${srcdir}/0001-add-back-old-uri-rewrite.patch
+}
 
 package() {
   cd ${srcdir}/${_realname}-${pkgver}
@@ -32,5 +41,4 @@ package() {
   install -Dm644 catalog.xml ${_pkgroot}/catalog.xml
   install -dm755 ${pkgdir}${MINGW_PREFIX}/etc/xml
   install -Dm644 COPYING ${pkgdir}${MINGW_PREFIX}/share/licenses/${_realname}/LICENSE
-
 }

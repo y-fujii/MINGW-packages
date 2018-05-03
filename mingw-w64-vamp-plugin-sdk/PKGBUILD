@@ -1,0 +1,42 @@
+# Maintainer: Jeff Hubbard <musikernel@gmail.com>
+
+_realname=vamp-plugin-sdk
+pkgbase=mingw-w64-${_realname}
+pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}"
+pkgver=2.6
+pkgrel=1
+pkgdesc="Vamp plugins extract descriptive information from audio data (mingw-w64)"
+arch=('any')
+url="http://www.vamp-plugins.org/"
+license=("BSD")
+options=('!buildflags')
+makedepends=("${MINGW_PACKAGE_PREFIX}-gcc" "${MINGW_PACKAGE_PREFIX}-pkg-config")
+depends=("${MINGW_PACKAGE_PREFIX}-gcc-libs" "${MINGW_PACKAGE_PREFIX}-libsndfile")
+source=("https://code.soundsoftware.ac.uk/attachments/download/1520/vamp-plugin-sdk-${pkgver}.tar.gz"
+        01-mingw-shared.patch)
+sha256sums=('d0d3578137ac0c1e63f31561081a8d61da526a81152bc1dc9383b629bc07f85f'
+            'a07047e51dfa4c55ded71394af5815a7038f14088bb1d7767f61e33bc162ad1b')
+
+prepare() {
+  cd ${srcdir}/${_realname}-${pkgver}
+  patch -p1 -i ${srcdir}/01-mingw-shared.patch
+}
+
+build() {
+  [[ -d "build-${MINGW_CHOST}" ]] && rm -rf "build-${MINGW_CHOST}"
+  cp -rf "${_realname}-${pkgver}" "build-${MINGW_CHOST}"
+  cd build-${MINGW_CHOST}
+
+  ./configure \
+    --prefix=${MINGW_PREFIX} \
+    --build=${MINGW_CHOST} \
+    --host=${MINGW_CHOST} \
+    --target=${MINGW_CHOST}
+
+  make
+}
+
+package() {
+  cd ${srcdir}/build-${MINGW_CHOST}
+  make DESTDIR="${pkgdir}" install
+}

@@ -1,10 +1,16 @@
 # Maintainer: Alexey Pavlov <Alexpux@gmail.com>
 # Contributor: Ray Donnelly <mingw.android@gmail.com>
 
+# Note: I would like to update to 59.1 but I found
+# putil.cpp: In function 'const char* uprv_getDefaultLocaleID_59d()':
+# putil.cpp:1733:86: error: 'GetUserDefaultLocaleName' was not declared in this sc           ope
+# int length = GetUserDefaultLocaleName(windowsLocale, UPRV_LENGTHOF(windowsL           ocale));
+
 _realname=icu
+pkgbase=mingw-w64-${_realname}
 pkgname=("${MINGW_PACKAGE_PREFIX}-${_realname}" "${MINGW_PACKAGE_PREFIX}-${_realname}-debug-libs")
-pkgver=54.1
-pkgrel=3
+pkgver=58.2
+pkgrel=2
 arch=('any')
 pkgdesc="International Components for Unicode library (mingw-w64)"
 arch=('any')
@@ -25,31 +31,54 @@ source=("http://download.icu-project.org/files/icu4c/${pkgver}/icu4c-${pkgver//.
         0012-libprefix.mingw.patch
         0014-mingwize-pkgdata.mingw.patch
         0015-debug.mingw.patch
-        0016-icu-pkgconfig.patch)
-md5sums=('e844caed8f2ca24c088505b0d6271bc0'
-         '4c8143786ed499184e64fc5a1a1d0fdf'
-         'eb56b72df2ca0dc77261c4f2adc5c8ad'
-         '9c63125f7bdd88871c89e13ee62ac02b'
-         '93830d77021eab270e537d466653557e'
-         'cce2427d95bcb4a364df5ab605c3e9a3'
-         'ee93f131a132f7e65d11d15a467b7abc'
-         'f43d08a14a3e723977178fed136e58b1'
-         'f7a59e098b2eda845b627137488b0573'
-         'd1accfbefbcd399a4a28a4a4e0737915'
-         '3f13cf5733c4a9363c5823a24d3fba85')
-prepare() {
-  cd "$srcdir/icu"
+        0016-icu-pkgconfig.patch
+        0017-icu-config-versioning.patch
+        0020-workaround-missing-locale.patch)
+sha256sums=('2b0a4410153a9b20de0e20c7d8b66049a72aef244b53683d0d7521371683da0c'
+            '314765fc244e52b8a077f6470f2bbb21c6954d649481af6d85b14af13717f7a8'
+            'ae73db58e714857f544f9e40de8fc6847f03c41346d5a8f42dd313ec99fc1ba9'
+            '2038881890542797fe1fe9a384cf2bb6c5504b18fb26eab1368f5cb0e6f7f7af'
+            'b30a05dbd9e8c70f1c3f6e119fa386925200a31cc9cab327b7affd6e07572842'
+            '2adfd968379888d919f0dd4e0379cef7b744ba56d98216b82372ed4cd00a2592'
+            'b05d8f1700904454329402178366ce2dd254d9afa76dc8239bfc126d7ff42800'
+            'c9299d76c95532abde64084a6cc9e1964adff086ac4c6229b20e02a523e561a7'
+            'ac63e11e11fb7c849fbeff0a0008a49942a1e19ffe29385aa70248614c7ffd4d'
+            'd1745b9d69729cb318cc329847160b50129621f98774a640726a7affd4b2bfd2'
+            'f895436a5a0fe0ef95cf5caa748ace952046a901ecf2f5d5b415240b691de2fb'
+            '88f808278e35c392ff1a0c416793df7743226b493013c26d5a1872a4dbad3326'
+            'd31c4451cb9912e8caec58de8cec1940b2509b035b926bd0d993459c1b3afd66')
 
-  patch -p1 -i "$srcdir"/0004-move-to-bin.mingw.patch
-  patch -p1 -i "$srcdir"/0007-actually-move-to-bin.mingw.patch
-  patch -p1 -i "$srcdir"/0008-data-install-dir.mingw.patch
-  patch -p1 -i "$srcdir"/0009-fix-bindir-in-config.mingw.patch
-  patch -p1 -i "$srcdir"/0010-msys-rules-for-makefiles.mingw.patch
-  patch -p1 -i "$srcdir"/0011-sbin-dir.mingw.patch
-  patch -p1 -i "$srcdir"/0012-libprefix.mingw.patch
-  patch -p1 -i "$srcdir"/0014-mingwize-pkgdata.mingw.patch
-  patch -p1 -i "$srcdir"/0015-debug.mingw.patch
-  patch -p1 -i "$srcdir"/0016-icu-pkgconfig.patch
+# Helper macros to help make tasks easier #
+apply_patch_with_msg() {
+  msg2 "Applying $1"
+  patch -Nbp1 -i "${srcdir}"/$1
+}
+
+del_file_exists() {
+  for _fname in "$@"
+  do
+    if [ -f $_fname ]; then
+      rm -rf $_fname
+    fi
+  done
+}
+# =========================================== #
+
+prepare() {
+  cd "${srcdir}/icu"
+
+  apply_patch_with_msg 0004-move-to-bin.mingw.patch
+  apply_patch_with_msg 0007-actually-move-to-bin.mingw.patch
+  apply_patch_with_msg 0008-data-install-dir.mingw.patch
+  apply_patch_with_msg 0009-fix-bindir-in-config.mingw.patch
+  apply_patch_with_msg 0010-msys-rules-for-makefiles.mingw.patch
+  apply_patch_with_msg 0011-sbin-dir.mingw.patch
+  apply_patch_with_msg 0012-libprefix.mingw.patch
+  apply_patch_with_msg 0014-mingwize-pkgdata.mingw.patch
+  apply_patch_with_msg 0015-debug.mingw.patch
+  apply_patch_with_msg 0016-icu-pkgconfig.patch
+  apply_patch_with_msg 0017-icu-config-versioning.patch
+  apply_patch_with_msg 0020-workaround-missing-locale.patch
 
   cd source
   autoreconf -vfi
@@ -57,7 +86,9 @@ prepare() {
 
 build() {
   local -a extra_config
-  cd "$srcdir/icu/"
+  CXXFLAGS+=" -DU_USE_STRTOD_L=0" # breaks on Windows XP
+  #CXXFLAGS+=" -D_WIN32_WINNT=0x0601"
+  cd "${srcdir}/icu/"
   # For ICU we ignore the options for debug above and always
   # build both debug and release (and static and shared).
   # This is because ICU people want the debug libraries be
@@ -65,7 +96,7 @@ build() {
   # (though only for the static variant, oddly, see:
   #   qtbase/config.tests/unix/icu/icu.pro
   for _variant in debug release; do
-    [ -d build-${CARCH}-${_variant} ] && rm -rf build-${CARCH}-${_variant}
+    [[ -d build-${CARCH}-${_variant} ]] && rm -rf build-${CARCH}-${_variant}
     if [ "${_variant}" = "debug" ]; then
       extra_config=( --enable-debug )
       extra_config+=( --with-library-suffix=d )
@@ -90,16 +121,16 @@ build() {
 
 check() {
   for _variant in debug release; do
-    pushd "$srcdir/icu/build-${CARCH}-${_variant}"
-    PATH=$srcdir/icu/build-${CARCH}/bin:$srcdir/icu/build-${CARCH}/lib:$PATH \
+    pushd "${srcdir}/icu/build-${CARCH}-${_variant}"
+    PATH=${srcdir}/icu/build-${CARCH}/bin:${srcdir}/icu/build-${CARCH}/lib:$PATH \
     make V=1 -k check
     popd
   done
 }
 
 package_icu() {
-  pushd "$srcdir/icu/build-${CARCH}-release"
-  make install DESTDIR="$pkgdir"
+  pushd "${srcdir}/icu/build-${CARCH}-release"
+  make install DESTDIR="${pkgdir}"
 
   mv "${pkgdir}${MINGW_PREFIX}"/lib/*.dll "${pkgdir}${MINGW_PREFIX}"/bin/
   mv "${pkgdir}${MINGW_PREFIX}"/bin/*.a "${pkgdir}${MINGW_PREFIX}"/lib/
@@ -115,8 +146,8 @@ package_icu() {
 
 package_icu-debug-libs() {
   options=('debug' '!strip')
-  pushd "$srcdir/icu/build-${CARCH}-debug"
-  make install DESTDIR="$pkgdir"
+  pushd "${srcdir}/icu/build-${CARCH}-debug"
+  make install DESTDIR="${pkgdir}"
 
   mv "${pkgdir}${MINGW_PREFIX}"/lib/*.dll "${pkgdir}${MINGW_PREFIX}"/bin/
   mv "${pkgdir}${MINGW_PREFIX}"/bin/*.a "${pkgdir}${MINGW_PREFIX}"/lib/

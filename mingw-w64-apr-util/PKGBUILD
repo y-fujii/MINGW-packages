@@ -1,0 +1,58 @@
+# Maintainer: Alexey Pavlov <alexpux@gmail.com>
+
+_realname=apr-util
+pkgbase=mingw-w64-${_realname}
+pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}"
+pkgver=1.5.4
+pkgrel=2
+pkgdesc="The Apache Portable Runtime (mingw-w64)"
+arch=('any')
+url="https://apr.apache.org/"
+makedepends=("${MINGW_PACKAGE_PREFIX}-gcc" "${MINGW_PACKAGE_PREFIX}-libtool")
+depends=("${MINGW_PACKAGE_PREFIX}-apr"
+         "${MINGW_PACKAGE_PREFIX}-expat"
+         "${MINGW_PACKAGE_PREFIX}-sqlite3")
+options=('!libtool')
+license=('APACHE')
+source=(https://www.apache.org/dist/apr/${_realname}-${pkgver}.tar.bz2{,.asc}
+        plugins.patch)
+sha256sums=('a6cf327189ca0df2fb9d5633d7326c460fe2b61684745fd7963e79a6dd0dc82e'
+            'SKIP'
+            'd79c9202ce6ddc9a67a671ec5bcf495672330a4fa7e29446fa54db793f3f09fe')
+
+prepare() {
+  cd "${srcdir}/${_realname}-${pkgver}"
+  patch -p1 -i ${srcdir}/plugins.patch
+  #./buildconf --with-apr=${MINGW_PREFIX}
+  autoreconf -fi
+}
+
+build() {
+  [[ -d build-${MINGW_CHOST} ]] && rm -rf build-${MINGW_CHOST}
+  mkdir -p build-${MINGW_CHOST}
+  cd build-${MINGW_CHOST}
+
+  ../${_realname}-${pkgver}/configure \
+    --prefix=${MINGW_PREFIX} \
+    --build=${MINGW_CHOST} \
+    --target=${MINGW_CHOST} \
+    --host=${MINGW_CHOST} \
+    --with-apr=${MINGW_PREFIX} \
+    --with-expat=${MINGW_PREFIX} \
+    --without-gdbm \
+    --without-ldap \
+    --without-pgsql \
+    --with-sqlite3=${MINGW_PREFIX}
+
+  make -j1
+}
+
+check() {
+  cd "${srcdir}/build-${MINGW_CHOST}"
+  make -j1 check
+}
+
+package() {
+  cd "${srcdir}/build-${MINGW_CHOST}"
+  make DESTDIR="${pkgdir}" install
+}

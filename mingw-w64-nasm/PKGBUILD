@@ -1,9 +1,9 @@
 # Maintainer: Alexey Pavlov <alexpux@gmail.com>
 
 _realname=nasm
-
+pkgbase=mingw-w64-${_realname}
 pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}"
-pkgver=2.11.02
+pkgver=2.13.01
 pkgrel=1
 pkgdesc="An 80x86 assembler designed for portability and modularity (mingw-w64)"
 arch=('any')
@@ -13,14 +13,14 @@ depends=("${MINGW_PACKAGE_PREFIX}-gcc-libs")
 options=('strip' '!libtool' 'staticlibs' '!makeflags')
 makedepends=("${MINGW_PACKAGE_PREFIX}-gcc" "${MINGW_PACKAGE_PREFIX}-pkg-config")
 source=(http://www.nasm.us/pub/nasm/releasebuilds/${pkgver}/${_realname}-${pkgver}.tar.xz)
-sha1sums=('d0525883abc6a8a9c0d2207b6872442ee26bfe1b')
+sha256sums=('aa0213008f0433ecbe07bb628506a5c4be8079be20fc3532a5031fd639db9a5e')
 
 prepare() {
   cd ${srcdir}/${_realname}-${pkgver}
 }
 
 build() {
-  export MSYS2_ARG_CONV_EXCL="-//OASIS"
+  [[ -d ${srcdir}/build-${MINGW_CHOST} ]] && rm -rf ${srcdir}/build-${MINGW_CHOST}
   cp -rf ${srcdir}/${_realname}-${pkgver} ${srcdir}/build-${MINGW_CHOST}
   cd ${srcdir}/build-${MINGW_CHOST}
   ./configure \

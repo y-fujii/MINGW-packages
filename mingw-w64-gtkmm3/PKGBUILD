@@ -1,18 +1,19 @@
 # Maintainer: Alexey Pavlov <alexpux@gmail.com>
 
 _realname=gtkmm3
+pkgbase=mingw-w64-${_realname}
 pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}"
-pkgver=3.14.0
+pkgver=3.22.0
 pkgrel=1
 pkgdesc="C++ bindings for gtk3 (mingw-w64)"
 arch=('any')
-url="http://gtkmm.org"
+url="https://www.gtkmm.org/"
 license=("LGPL")
 makedepends=("${MINGW_PACKAGE_PREFIX}-gcc" "${MINGW_PACKAGE_PREFIX}-pkg-config")
 depends=("${MINGW_PACKAGE_PREFIX}-gcc-libs" "${MINGW_PACKAGE_PREFIX}-atkmm" "${MINGW_PACKAGE_PREFIX}-pangomm" "${MINGW_PACKAGE_PREFIX}-gtk3")
 options=('staticlibs' 'strip')
-source=("http://ftp.gnome.org/pub/GNOME/sources/gtkmm/${pkgver%.*}/gtkmm-$pkgver.tar.xz")
-sha256sums=('d9f528a62c6ec226fa08287c45c7465b2dce5aae5068e9ac48d30a64a378e48b')
+source=("https://download.gnome.org/sources/gtkmm/${pkgver%.*}/gtkmm-${pkgver}.tar.xz")
+sha256sums=('05da4d4b628fb20c8384630ddf478a3b5562952b2d6181fe28d58f6cbc0514f5')
 
 build() {
   mkdir -p "${srcdir}/build-${MINGW_CHOST}"
@@ -29,6 +30,6 @@ build() {
 
 package() {
   cd "${srcdir}/build-${MINGW_CHOST}"
-  make DESTDIR="$pkgdir" install
+  make DESTDIR="${pkgdir}" install
   find "${pkgdir}${MINGW_PREFIX}" -name '*.def' -o -name '*.exp' | xargs -rtl1 rm
 }

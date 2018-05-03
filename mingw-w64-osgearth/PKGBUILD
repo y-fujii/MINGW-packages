@@ -1,0 +1,111 @@
+# Maintainer: James Duley <jagduley gmail>
+
+_realname=osgearth
+pkgbase=mingw-w64-${_realname}
+pkgname=("${MINGW_PACKAGE_PREFIX}-${_realname}" "${MINGW_PACKAGE_PREFIX}-${_realname}-debug")
+pkgver=2.8
+pkgrel=3
+arch=('any')
+license=('LGPL')
+url="http://osgearth.org"
+depends=("${MINGW_PACKAGE_PREFIX}-curl"
+         "${MINGW_PACKAGE_PREFIX}-gdal"
+         "${MINGW_PACKAGE_PREFIX}-geos"
+         "${MINGW_PACKAGE_PREFIX}-gdal"
+         "${MINGW_PACKAGE_PREFIX}-poco"
+         "${MINGW_PACKAGE_PREFIX}-protobuf"
+         "${MINGW_PACKAGE_PREFIX}-sqlite3")
+makedepends=("${MINGW_PACKAGE_PREFIX}-gcc"
+             "${MINGW_PACKAGE_PREFIX}-pkg-config"
+             "${MINGW_PACKAGE_PREFIX}-cmake"
+             "${MINGW_PACKAGE_PREFIX}-osgQt"
+             "${MINGW_PACKAGE_PREFIX}-osgQt-debug"
+             "${MINGW_PACKAGE_PREFIX}-gdal")
+options=('staticlibs' 'strip')
+source=("https://github.com/gwaldron/osgearth/archive/${_realname}-${pkgver}.tar.gz"
+        "0001-Remove-deprecated-call.patch"
+        "0002-geos-3_6_1-support.patch"
+        "0005-Fixed-crash-due-to-probable-GCC-5.3.0-optimizer-bug.patch")
+sha256sums=('78120338ead2976018cc877e93342403bafe1b032f2f8b7de3915ba6c5c2486a'
+            '3121e855da062ff59a2380300ad7f93442eafab36cc8525f5fbc44568c633c2b'
+            'fe2a2381cf05ef4a7e89552cf87bf97e276ed0e7cbbd96cb7ce820ebc12832d0'
+            'ef451fa5a21f247ac1fe048e7990c59ed4f4be780af4f1ede891007a68b60603')
+
+prepare() {
+  cd ${srcdir}/${_realname}-${_realname}-${pkgver}
+  patch -p1 -i ${srcdir}/0001-Remove-deprecated-call.patch
+  patch -p1 -i ${srcdir}/0002-geos-3_6_1-support.patch
+  patch -p1 -i ${srcdir}/0005-Fixed-crash-due-to-probable-GCC-5.3.0-optimizer-bug.patch
+}
+
+build() {
+  _pkgver=${_realname}-${pkgver} # How it's tagged in git
+
+  export FREETYPE_DIR=${MINGW_PREFIX}
+
+  for builddir in {Release,Debug}-${MINGW_CHOST}; do
+    [[ -d ${builddir} ]] && rm -rf ${builddir}
+    mkdir -p ${builddir}
+    pushd ${builddir}
+      [[ "${builddir%-${MINGW_CHOST}}" == "Release" ]] && {
+        local _opts=""
+      } || {
+        local _opts=""
+      }
+
+      msg "Building ${builddir%-${MINGW_CHOST}} version..."
+
+      MSYS2_ARG_CONV_EXCL="-DCMAKE_INSTALL_PREFIX=" \
+      ${MINGW_PREFIX}/bin/cmake.exe \
+        -G"MSYS Makefiles" \
+        -DCMAKE_INSTALL_PREFIX=${MINGW_PREFIX} \
+        -DCMAKE_BUILD_TYPE=${builddir%-${MINGW_CHOST}} \
+        -DOSGEARTH_USE_QT=ON \
+        -DOSGEARTH_QT_BUILD_LEGACY_WIDGETS=ON \
+        ${_opts} \
+        ../${_realname}-${_pkgver}
+
+      make
+    popd
+  done
+}
+
+package_release() {
+  depends+=("${MINGW_PACKAGE_PREFIX}-OpenSceneGraph")
+  pkgdesc="A terrain rendering toolkit for OpenSceneGraph (mingw-w64)"
+
+  cd Release-${MINGW_CHOST}
+  make DESTDIR=${pkgdir} -j1 install
+
+  mkdir -p ${pkgdir}${MINGW_PREFIX}/share/osgearth
+  cp -rf ${srcdir}/${_realname}-${_realname}-${pkgver}/data ${pkgdir}${MINGW_PREFIX}/share/osgearth
+}
+
+package_debug() {
+  depends+=("${MINGW_PACKAGE_PREFIX}-OpenSceneGraph-debug")
+  options=('staticlibs' '!strip')
+  pkgdesc="A terrain rendering toolkit for OpenSceneGraph (debug) (mingw-w64)"
+
+  cd Debug-${MINGW_CHOST}
+  make DESTDIR=${pkgdir} -j1 install
+
+  rm -rf ${pkgdir}${MINGW_PREFIX}/include
+  rm -rf ${pkgdir}${MINGW_PREFIX}/lib/pkgconfig
+  rm -rf ${pkgdir}${MINGW_PREFIX}/share
+}
+
+package_mingw-w64-i686-osgearth() {
+  package_release
+}
+
+package_mingw-w64-i686-osgearth-debug() {
+  package_debug
+}
+
+package_mingw-w64-x86_64-osgearth() {
+  package_release
+}
+
+package_mingw-w64-x86_64-osgearth-debug() {
+  package_debug
+}

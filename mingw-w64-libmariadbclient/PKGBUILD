@@ -1,61 +1,74 @@
 # Maintainer: Alexey Pavlov <alexpux@gmail.com>
 
 _realname=libmariadbclient
+pkgbase=mingw-w64-${_realname}
 pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}"
-pkgver=2.1.0
-pkgrel=1
+pkgver=2.3.3
+pkgrel=2
 pkgdesc="MariaDB client libraries (mingw-w64)"
 arch=('any')
-url="http://mariadb.org"
+url="https://mariadb.org/"
 license=('LGPL')
-makedepends=("${MINGW_PACKAGE_PREFIX}-gcc")
+makedepends=("${MINGW_PACKAGE_PREFIX}-gcc"
+             "${MINGW_PACKAGE_PREFIX}-cmake")
 depends=("${MINGW_PACKAGE_PREFIX}-gcc-libs"
          "${MINGW_PACKAGE_PREFIX}-openssl"
-         "${MINGW_PACKAGE_PREFIX}-zlib") #"${MINGW_PACKAGE_PREFIX}-sqlite3"
+         "${MINGW_PACKAGE_PREFIX}-zlib")
+#optdepends=("${MINGW_PACKAGE_PREFIX}-curl")
 options=('!strip' 'staticlibs')
-source=("https://downloads.mariadb.org/interstitial/connector-c-${pkgver}/source-tgz/mariadb-connector-c-${pkgver}-src.tar.gz"
-        'fix-libnames-mingw.patch'
+source=(#"https://downloads.mariadb.org/interstitial/connector-c-${pkgver}/source-tgz/mariadb-connector-c-${pkgver}-src.tar.gz"
+        http://mirror.mephi.ru/mariadb/connector-c-${pkgver}/mariadb-connector-c-${pkgver}-src.tar.gz{,.asc}
+        '001-2.2.3-fix-libnames-mingw.patch'
         'use_fopen_for_xp_compatibility.patch'
         'fix-size-t-defined.patch'
-        'fix-qt5-uint-error.patch')
-sha256sums=('568050b89463af7610d458669fd9eee06dcc9405689aca8a526ac8c013b59167'
-            '6aecfea37704406d035b77702a05715493a3b9a036ffe1c2dee9fd600710d60c'
-            '81ea9f16845c14a35e9c587ae84dc23c383c8be6d4afcf0587b84972a8f81b4e'
-            'f0cba818d125687dc8d04f501484be8d159a1989ff12b5130c2fd213add3e519'
-            'f0fcf51886f51bee17ca518ee6b0f837f9320616333fe5c016afce2d00185b82')
+        'fix-redefinitions.patch'
+        'fix-pthread.patch'
+        'add-mariadb_config.patch')
+validpgpkeys=("199369E5404BD5FC7D2FE43BCBCB082A1BB943DB") #MariaDB Package Signing Key <package-signing-key@mariadb.org>
+sha256sums=('82a5710134e7654b9cad58964d6a25ed91b3dc1804ff51e8be2def0032914089'
+            'SKIP'
+            'a6c8df6e11f783be8dc2df268b4e9d086e0521ee7ebcea4ba56e533b1834a976'
+            '8069bc0c7f4204fe2b1ea54c610c27aebd0c54d7a21ecf6352c9bdd9cf1c4062'
+            'e84d3ac9b2e716dc1581d82c34001d8561bb0d09750d1d57d4b448a8cc259ff0'
+            'ddb20e474ba1a63f65f28ee76bb74074316b15cc90ecdae6d2aa1febf0803d72'
+            'd69bded191fad678728ac1f9c79e48daf2ed10c83ee9698506dbb0abf8489575'
+            'c9fca6bcb6747b5431a6afdb6c12c9f8af205c1d289d323d67108b1cbeaf5a7b')
 
 prepare() {
-  cd ${srcdir}/mariadb-connector-c-$pkgver-src
-  patch -p0 -i ../fix-libnames-mingw.patch
-  patch -p0 -i ../use_fopen_for_xp_compatibility.patch
-  patch -p0 -i ../fix-size-t-defined.patch
-  patch -p0 -i ../fix-qt5-uint-error.patch
+  cd ${srcdir}/mariadb-connector-c-${pkgver}-src
+  patch -p1 -i ${srcdir}/001-2.2.3-fix-libnames-mingw.patch
+  patch -p1 -i ${srcdir}/use_fopen_for_xp_compatibility.patch
+  patch -p1 -i ${srcdir}/fix-size-t-defined.patch
+  patch -p1 -i ${srcdir}/fix-redefinitions.patch
+  patch -p1 -i ${srcdir}/fix-pthread.patch
+  patch -p1 -i ${srcdir}/add-mariadb_config.patch
 }
 
 build() {
-  mkdir -p ${pkgdir}${MINGW_PREFIX}
-  pushd ${pkgdir}${MINGW_PREFIX} > /dev/null
-  export PREFIX_WIN=`pwd -W`
-  popd > /dev/null
-
-  mkdir -p ${srcdir}/${MINGW_CHOST}
-  cd ${srcdir}/${MINGW_CHOST}
+  rm -rf ${srcdir}/build-${MINGW_CHOST}
+  mkdir -p ${srcdir}/build-${MINGW_CHOST}
+  cd ${srcdir}/build-${MINGW_CHOST}
+  
+  MSYS2_ARG_CONV_EXCL="-DCMAKE_INSTALL_PREFIX=" \
   ${MINGW_PREFIX}/bin/cmake \
     -G "MSYS Makefiles" \
-    -DCMAKE_INSTALL_PREFIX:PATH=${PREFIX_WIN} \
+    -DCMAKE_INSTALL_PREFIX=${MINGW_PREFIX} \
+    -DPREFIX_INSTALL_DIR=${MINGW_PREFIX} \
     -DCMAKE_BUILD_TYPE=RELEASE \
     -DWITH_EXTERNAL_ZLIB=ON \
-    -DWITH_SQLITE=OFF \
+    -DWITH_REMOTEIO=OFF \
     -DWITH_OPENSSL=ON \
     -DWITH_MYSQLCOMPAT=OFF \
-    ../mariadb-connector-c-$pkgver-src
+    ../mariadb-connector-c-${pkgver}-src
 
   make
 }
 
 package() {
-  cd "${srcdir}/${MINGW_CHOST}"
-  make install
+  cd "${srcdir}/build-${MINGW_CHOST}"
+  make DESTDIR=${pkgdir} install
+
+  install -D -m0755 mariadb_config/mariadb_config.exe ${pkgdir}${MINGW_PREFIX}/bin/mariadb_config.exe
 
   ln -s "${pkgdir}${MINGW_PREFIX}"/include/mariadb "${pkgdir}${MINGW_PREFIX}"/include/mysql
 
